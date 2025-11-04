@@ -1,300 +1,277 @@
-# Sushi GPU Pipeline
+# Sushi Production Pipeline
 
-This directory contains scripts for processing earnings call videos on the **sushi** GPU machine.
+Complete earnings video production pipeline running on sushi GPU machine.
 
-## Pipeline Overview
+## Network Storage
+
+Sushi has network-accessible drives for video storage:
+- **home-meera** (192.168.1.101/home-meera): ~1.7TB
+- **var-data** (192.168.1.101/var-data): Large capacity (RECOMMENDED)
+
+**Configure storage:** `./setup-storage.sh`
+**Documentation:** See `NETWORK-STORAGE.md`
+
+Videos can be stored on network drives to keep git repo small.
+
+## Directory Structure (Co-located by Video)
 
 ```
-Mac (Local Development)
-    ↓ scp upload
-Sushi (GPU Machine)
-    ├─ Whisper Transcription (GPU accelerated)
-    └─ LLM Insights Extraction (OpenAI API)
-    ↓ scp download
-Mac (Local Development)
-    └─ Remotion Video Generation
+sushi/
+├── videos/
+│   ├── pltr-q3-2024/              # Video ID folder
+│   │   ├── input/
+│   │   │   └── source.mp4         # Downloaded/uploaded source video
+│   │   ├── transcripts/
+│   │   │   ├── transcript.json    # Whisper full output
+│   │   │   ├── transcript.vtt     # Subtitles
+│   │   │   ├── transcript.srt     # Subtitles
+│   │   │   ├── transcript.txt     # Plain text
+│   │   │   ├── paragraphs.json    # Formatted for LLM
+│   │   │   └── insights.json      # LLM-extracted insights
+│   │   ├── output/
+│   │   │   └── final.mp4          # Rendered Remotion video
+│   │   ├── thumbnail/
+│   │   │   └── custom.jpg         # Custom designed thumbnail
+│   │   └── metadata.json          # Video metadata & processing status
+│   │
+│   ├── nvda-q3-2024/
+│   └── ...
+│
+├── scripts/
+│   ├── process-earnings.sh        # Master script (runs everything)
+│   ├── download-source.py         # Download from YouTube or URL
+│   ├── transcribe.py              # Whisper + LLM (existing)
+│   ├── render-video.js            # Remotion rendering
+│   ├── upload-youtube.js          # YouTube upload
+│   └── save-to-db.js              # Database record creation
+│
+├── config/
+│   └── .env                       # API keys & credentials
+│
+└── logs/
+    └── pltr-q3-2024.log          # Processing logs per video
 ```
 
 ---
 
-## Setup on Sushi (One-time)
+## Workflow
 
-### 1. Clone/Pull Repository
+### 1. On Mac: Create Video Entry
+
+Edit `sushi/videos-list.md`:
+
+```markdown
+## Videos to Process
+
+- [ ] pltr-q3-2024 - Palantir Q3 2024 - https://youtube.com/watch?v=...
+- [ ] nvda-q3-2024 - NVIDIA Q3 2024 - (manual upload)
+```
 
 ```bash
-# SSH into sushi
-ssh sushi
+git add -A
+git commit -m "Add PLTR Q3 2024 to queue"
+git push
+```
 
-# Clone repo (first time)
-cd ~
-git clone <your-repo-url> earninglens
-cd earninglens
+### 2. On Sushi: Pull & Process
 
-# Or pull latest changes
+```bash
+# Pull latest
 git pull
+
+# Option A: Download from YouTube
+./sushi/scripts/process-earnings.sh pltr-q3-2024 youtube https://youtube.com/watch?v=jUnV3LiN0_k
+
+# Option B: Use manually uploaded file
+# (First: scp video to sushi/videos/pltr-q3-2024/input/source.mp4)
+./sushi/scripts/process-earnings.sh pltr-q3-2024 manual
+
+# This runs entire pipeline:
+# 1. Download (if YouTube)
+# 2. Transcribe with Whisper
+# 3. Extract insights with LLM
+# 4. Render video with Remotion
+# 5. Upload to YouTube
+# 6. Save record to database
 ```
 
-### 2. Run Setup Script
+### 3. On Mac: Custom Thumbnail
 
 ```bash
-chmod +x sushi/setup-sushi.sh
+# Pull results
+git pull
+
+# Design custom thumbnail
+# Save to: sushi/videos/pltr-q3-2024/thumbnail/custom.jpg
+
+# Push back
+git add sushi/videos/pltr-q3-2024/thumbnail/custom.jpg
+git commit -m "Add custom thumbnail for PLTR Q3"
+git push
+```
+
+### 4. On Sushi: Update YouTube Thumbnail
+
+```bash
+git pull
+./sushi/scripts/update-thumbnail.sh pltr-q3-2024
+```
+
+---
+
+## One-Command Processing
+
+```bash
+# Complete pipeline in one command
+./sushi/scripts/process-earnings.sh <video-id> <source> [url]
+
+# Examples:
+./sushi/scripts/process-earnings.sh pltr-q3-2024 youtube https://youtube.com/watch?v=jUnV3LiN0_k
+./sushi/scripts/process-earnings.sh nvda-q3-2024 manual
+```
+
+**What it does:**
+1. ✅ Creates video folder structure
+2. ✅ Downloads source (if YouTube)
+3. ✅ Transcribes with Whisper (GPU)
+4. ✅ Extracts insights with LLM
+5. ✅ Renders Remotion video
+6. ✅ Uploads to YouTube
+7. ✅ Creates database record
+8. ✅ Updates git with results
+
+---
+
+## Setup (One-time on Sushi)
+
+```bash
+# 1. Install dependencies
 ./sushi/setup-sushi.sh
-```
 
-This will:
-- Check for CUDA/GPU
-- Create Python virtual environment (`.venv-sushi`)
-- Install dependencies (Whisper, OpenAI, etc.)
-- Download Whisper models (~3GB)
-- Create working directories
-- Prompt for OpenAI API key
+# 2. Install Node.js & Remotion
+./sushi/setup-node.sh
 
-### 3. Set OpenAI API Key (if not done during setup)
+# 3. Configure credentials
+cp sushi/config/.env.example sushi/config/.env
+nano sushi/config/.env
 
-```bash
-export OPENAI_API_KEY='your-api-key-here'
-
-# Add to ~/.bashrc for persistence
-echo "export OPENAI_API_KEY='your-api-key-here'" >> ~/.bashrc
+# Add:
+# OPENAI_API_KEY=...
+# YOUTUBE_API_KEY=...
+# DATABASE_URL=...
 ```
 
 ---
 
-## Usage
+## File Locations
 
-### Option 1: From Mac (Recommended)
+**Per video, all assets co-located:**
 
-Use the wrapper script on your Mac:
-
-```bash
-# From Mac, in earninglens directory
-chmod +x scripts/process-on-sushi.sh
-
-./scripts/process-on-sushi.sh public/videos/PLTR/jUnV3LiN0_k.mp4
+```
+sushi/videos/pltr-q3-2024/
+├── input/source.mp4           # Source video (75 MB)
+├── transcripts/
+│   ├── transcript.json        # Full Whisper (200 KB)
+│   ├── transcript.vtt         # Subtitles (50 KB)
+│   ├── paragraphs.json        # LLM input (150 KB)
+│   └── insights.json          # LLM output (100 KB)
+├── output/final.mp4           # Rendered video (100 MB)
+├── thumbnail/custom.jpg       # Custom thumbnail (200 KB)
+└── metadata.json              # Status & info (5 KB)
 ```
 
-This will automatically:
-1. Upload video to sushi
-2. Process (transcribe + LLM)
-3. Download all results
-4. Optionally clean up
-
-### Option 2: Directly on Sushi
-
-SSH into sushi and run manually:
-
-```bash
-ssh sushi
-cd ~/earninglens
-source .venv-sushi/bin/activate
-
-# Process a video
-python sushi/process_video.py sushi/uploads/video.mp4
-
-# Or just transcribe (skip LLM)
-python sushi/transcribe.py sushi/uploads/video.mp4
-```
-
----
-
-## Generated Files
-
-For each video processed, you'll get:
-
-| File | Description |
-|------|-------------|
-| `{name}.json` | Full Whisper output (segments, word timestamps) |
-| `{name}.srt` | SubRip subtitles (for video editing) |
-| `{name}.vtt` | WebVTT subtitles (for web players) |
-| `{name}.txt` | Plain text transcript |
-| `{name}.paragraphs.json` | Simplified JSON for LLM (speaker-labeled) |
-| `{name}.insights.json` | LLM-extracted insights, metadata, entities |
-
----
-
-## Insights JSON Structure
-
-The `insights.json` file contains:
-
+**metadata.json format:**
 ```json
 {
-  "metadata": {
-    "title": "Palantir Technologies Q3 2024 Earnings Call",
-    "description": "Quarterly earnings webcast...",
-    "summary": "Palantir discusses Q3 2024 results...",
-    "content_type": "call",
-    "event_date": "2024-11-04",
-    "participants_count": 3
+  "video_id": "pltr-q3-2024",
+  "ticker": "PLTR",
+  "company": "Palantir Technologies",
+  "quarter": "Q3",
+  "year": 2024,
+  "created_at": "2024-11-03T20:00:00Z",
+  "status": {
+    "download": "completed",
+    "transcribe": "completed",
+    "insights": "completed",
+    "render": "completed",
+    "upload": "completed",
+    "database": "completed"
   },
-
-  "speaker_names": {
-    "SPEAKER_00": "Alex Karp",
-    "SPEAKER_01": "Dave Glazer",
-    "SPEAKER_02": "Ryan Taylor"
+  "youtube": {
+    "video_id": "abc123xyz",
+    "url": "https://youtube.com/watch?v=abc123xyz",
+    "uploaded_at": "2024-11-03T22:00:00Z"
   },
-
-  "table_of_contents": [
-    {"timestamp": 0, "title": "Opening Remarks", "description": "..."},
-    {"timestamp": 180, "title": "Q3 Financial Results", "description": "..."}
-  ],
-
-  "insights": {
-    "key_takeaways": [...],
-    "keywords": [{term, explanation}, ...],
-    "suggested_questions": [...],
-    "notable_quotes": [...]
-  },
-
-  "entities": {
-    "people": [...],
-    "organizations": [...],
-    "products": [...],
-    "locations": [...]
+  "database": {
+    "record_id": "rec_xyz123",
+    "created_at": "2024-11-03T22:05:00Z"
   }
 }
 ```
 
 ---
 
-## Configuration
+## Cost Estimates
 
-### Whisper Models
+**Per 46-minute earnings video:**
 
-Available models (trade-off: accuracy vs speed):
+| Step | Resource | Cost |
+|------|----------|------|
+| Download | YouTube/IR | Free |
+| Transcribe | Whisper (GPU) | Free |
+| LLM Insights | OpenAI gpt-4o-mini | ~$0.02 |
+| Render | Remotion (GPU) | Free |
+| Upload | YouTube API | Free |
+| Database | Neon | Free (tier) |
+| **Total** | | **~$0.02** |
 
-- `tiny` - Fastest, lowest quality (~1GB VRAM)
-- `base` - Fast, decent (~1GB VRAM)
-- `small` - Good balance (~2GB VRAM)
-- **`medium`** - **Default**, high quality (~5GB VRAM)
-- `large` - Best quality, slowest (~10GB VRAM)
-
-Change model:
-
-```bash
-python sushi/process_video.py uploads/video.mp4 small
-```
-
-### LLM Models
-
-Available OpenAI models:
-
-- **`gpt-4o-mini`** - **Default**, cheap ($0.15/1M tokens)
-- `gpt-4o` - More capable ($5/1M tokens)
-- `gpt-4-turbo` - Legacy
-
-Change model:
-
-```bash
-python sushi/process_video.py uploads/video.mp4 medium gpt-4o
-```
+**Time per video:** ~20-30 minutes (mostly transcription)
 
 ---
 
-## Performance
+## Monitoring
 
-**Whisper Transcription (46 min video):**
-- GPU (CUDA): ~10-15 minutes
-- CPU: ~1-2 hours
+**Check status:**
+```bash
+# View processing log
+tail -f sushi/logs/pltr-q3-2024.log
 
-**LLM Insights (46 min video):**
-- API call: ~10-30 seconds
-- Cost: ~$0.01-0.02 (gpt-4o-mini)
+# Check metadata
+cat sushi/videos/pltr-q3-2024/metadata.json
+```
 
-**Total:** ~15-20 minutes per video on GPU
+**List all videos:**
+```bash
+ls -lh sushi/videos/
+```
 
 ---
 
 ## Troubleshooting
 
-### CUDA Out of Memory
-
-Use a smaller Whisper model:
-
+**GPU out of memory:**
 ```bash
-python sushi/process_video.py uploads/video.mp4 small
+# Use smaller Whisper model
+./sushi/scripts/process-earnings.sh pltr-q3-2024 youtube <url> --whisper-model small
 ```
 
-### OpenAI API Error
-
-Check API key is set:
-
+**Remotion rendering slow:**
 ```bash
-echo $OPENAI_API_KEY
+# Check GPU usage
+nvidia-smi
+
+# Render with CPU fallback
+./sushi/scripts/process-earnings.sh pltr-q3-2024 youtube <url> --no-gpu
 ```
 
-### SSH Connection Issues
-
-Update hostname in `scripts/process-on-sushi.sh`:
-
+**YouTube upload failed:**
 ```bash
-SUSHI_HOST="user@sushi.local"  # or IP address
+# Retry upload only
+./sushi/scripts/upload-youtube.js pltr-q3-2024
 ```
 
-### Git Pull Conflicts
-
+**Database save failed:**
 ```bash
-# On sushi
-cd ~/earninglens
-git stash
-git pull
-git stash pop
+# Retry database only
+./sushi/scripts/save-to-db.js pltr-q3-2024
 ```
-
----
-
-## Development Workflow
-
-1. **On Mac:** Download video with RapidAPI
-   ```bash
-   source .venv/bin/activate
-   python scripts/download-youtube.py jUnV3LiN0_k
-   ```
-
-2. **On Mac:** Process on sushi GPU
-   ```bash
-   ./scripts/process-on-sushi.sh public/videos/PLTR/jUnV3LiN0_k.mp4
-   ```
-
-3. **On Mac:** Build Remotion video with transcripts + insights
-   ```bash
-   npm run remotion
-   # Use insights.json for speaker names, metadata, etc.
-   ```
-
-4. **On Mac:** Render final video
-   ```bash
-   npm run render
-   ```
-
----
-
-## Directory Structure
-
-```
-sushi/
-├── README.md                 # This file
-├── requirements.txt          # Python dependencies
-├── setup-sushi.sh           # One-time setup script
-├── transcribe.py            # Whisper transcription
-├── insights_generator.py    # LLM insights extraction
-├── process_video.py         # Full pipeline (transcribe + LLM)
-├── uploads/                 # Working directory (uploaded videos)
-└── downloads/               # Processed results
-```
-
----
-
-## Cost Estimates
-
-**Per 46-minute earnings call video:**
-
-| Item | Cost |
-|------|------|
-| RapidAPI YouTube download | Free (quota limit) |
-| Whisper transcription | Free (local GPU) |
-| OpenAI LLM (gpt-4o-mini) | ~$0.01-0.02 |
-| **Total** | **~$0.02** |
-
-**For 100 videos:**
-- Total cost: ~$2
-- Total time: ~25-30 hours (GPU)
