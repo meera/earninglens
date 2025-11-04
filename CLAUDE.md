@@ -426,6 +426,192 @@ npm start
 
 ---
 
+## Working on Laptop (Travel Mode)
+
+**IMPORTANT:** Always ensure work can be done on this laptop in case of travel. It will be slower and some paths need updating, but it must be possible.
+
+### Key Differences When Working on Mac Laptop
+
+**Primary Setup (Recommended):**
+- Linux GPU machine ("sushi") - Fast transcription, rendering
+- SSH access required
+- Shared output directory
+
+**Travel Mode (Mac Laptop):**
+- No SSH to sushi (offline/traveling)
+- CPU-only (slower, but functional)
+- Local file paths
+
+### Path Updates for Laptop
+
+When working on laptop, update these paths:
+
+**1. Transcription (Python)**
+```bash
+# On sushi (GPU): Fast (~15-20 min for 46 min video)
+python transcribe.py --model medium
+
+# On Mac (CPU): Slower (~60-90 min for 46 min video)
+python transcribe.py --model small  # Use smaller model
+```
+
+**2. Remotion Rendering**
+```bash
+# On sushi: GPU-accelerated rendering
+npm run render:aapl  # ~5-10 min
+
+# On Mac: CPU rendering (slower)
+npm run render:aapl  # ~20-30 min
+
+# Update remotion.config.ts for Mac (if needed):
+Config.setChromiumOpenGlRenderer('swangle');  # Software renderer
+Config.setConcurrency('50%');  # Lower concurrency
+```
+
+**3. Output Directory**
+```bash
+# Standard (with sushi mount): ~/earninglens/sushi/videos/
+# Travel mode (local only): ~/earninglens/sushi/videos/
+
+# Same path! No changes needed if working locally.
+# Just no access to sushi's generated files until you sync.
+```
+
+### Laptop Workflow (Offline/Travel)
+
+**Option A: Work on Web/Dashboard Only**
+```bash
+cd ~/earninglens
+npm run dev          # Next.js web app
+npm run remotion     # Remotion Studio (preview only)
+```
+
+**Option B: Process Videos Locally (Slower)**
+```bash
+# 1. Download video
+cd sushi
+python scripts/download-youtube.py <video-id>
+
+# 2. Transcribe (CPU - slower)
+python transcribe.py --video-id pltr-q3-2024 --model small
+
+# 3. Render video (CPU - slower)
+cd ../studio
+npm run render -- pltr-q3-2024
+
+# 4. Upload to R2 when online
+cd ..
+npm run upload:r2 -- sushi/videos/pltr-q3-2024/output/final.mp4
+
+# 5. Commit transcripts
+git add sushi/videos/pltr-q3-2024
+git commit -m "Process PLTR Q3 2024 (laptop)"
+git push
+```
+
+### Performance Expectations
+
+| Task | Sushi (GPU) | Mac Laptop (CPU) |
+|------|-------------|------------------|
+| Download video (46 min) | 1-2 min | 1-2 min (same) |
+| Transcribe (Whisper) | 15-20 min | 60-90 min |
+| LLM Insights | 30 sec | 30 sec (same) |
+| Render video (Remotion) | 5-10 min | 20-30 min |
+| Upload to R2 | 2-3 min | 2-3 min (same) |
+| **Total** | **~20-30 min** | **~90-120 min** |
+
+### Recommendations for Travel
+
+1. **Do web development on laptop** (fast, no GPU needed)
+2. **Queue videos for processing** (edit `sushi/videos-list.md`)
+3. **Process videos on sushi when back** (SSH in remotely if possible)
+4. **Emergency processing on laptop** (if urgent, accept slower times)
+
+### Verify Laptop Setup
+
+Before traveling, ensure laptop has:
+
+```bash
+# 1. Python environment
+cd ~/earninglens/sushi
+python --version  # Should be 3.9+
+pip install -r requirements.txt
+
+# 2. Node.js setup
+cd ~/earninglens
+npm install
+
+# 3. Whisper model downloaded
+python -c "import whisper; whisper.load_model('small')"
+
+# 4. Test render
+cd studio
+npm run render -- --props='@./data/AAPL-Q4-2024.json'
+
+# 5. Verify R2 access
+rclone ls r2-public:videotobe-public
+```
+
+### Syncing Work Between Laptop and Sushi
+
+**Before leaving (with sushi access):**
+```bash
+# Pull latest from sushi
+ssh sushi "cd ~/earninglens && git pull && git push"
+cd ~/earninglens
+git pull
+```
+
+**While traveling (laptop only):**
+```bash
+# Work on web app, design, documentation
+git add .
+git commit -m "Web app updates (travel mode)"
+git push
+```
+
+**After returning (sync with sushi):**
+```bash
+# SSH into sushi
+ssh sushi
+cd ~/earninglens
+git pull  # Get your laptop changes
+
+# Process any queued videos
+./scripts/process-earnings.sh pltr-q3-2024 youtube <url>
+git push
+```
+
+### Emergency GPU Access While Traveling
+
+If you need GPU processing while traveling:
+
+**Option 1: SSH to Sushi (if online)**
+```bash
+ssh sushi
+cd ~/earninglens
+git pull
+./scripts/process-earnings.sh pltr-q3-2024 youtube <url>
+```
+
+**Option 2: Use Remotion Lambda (paid, but fast)**
+```bash
+# Deploy to Lambda
+npm run deploy
+
+# Render on Lambda
+npx remotion lambda render <composition-id>
+```
+
+**Option 3: Process locally overnight**
+```bash
+# Start render before bed
+npm run render:aapl &
+# Will finish in ~2 hours
+```
+
+---
+
 ## R2 Bucket Organization (Cloudflare)
 
 ### Bucket: `earninglens` (Separate from VideotoBe)
