@@ -2,6 +2,8 @@
 
 Video generation using Remotion for earnings call videos.
 
+**Studio Port:** http://localhost:8082
+
 ## Quick Start
 
 ### Install Dependencies
@@ -14,7 +16,7 @@ npm install
 npm start
 ```
 
-This opens the Remotion Studio where you can preview and edit the video composition.
+This opens Remotion Studio at **http://localhost:8082** where you can preview and edit video compositions.
 
 ### Render First Video (Apple Q4 2024)
 ```bash

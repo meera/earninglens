@@ -24,28 +24,28 @@ export default async function HomePage() {
     <>
       <GoogleOneTap />
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
-        {/* Header */}
-        <header className="border-b border-slate-800 bg-slate-950/50 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="min-h-screen bg-background">
+        {/* Header - YouTube style minimal */}
+        <header className="border-b border-border bg-background sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">E</span>
+                <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">E</span>
                 </div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                <h1 className="text-xl font-semibold text-text-primary">
                   EarningLens
                 </h1>
               </div>
 
               <nav className="flex items-center space-x-6">
-                <Link href="/videos" className="text-slate-400 hover:text-white transition">
+                <Link href="/videos" className="text-text-secondary hover:text-text-primary transition-colors duration-100">
                   Videos
                 </Link>
-                <Link href="/companies" className="text-slate-400 hover:text-white transition">
+                <Link href="/companies" className="text-text-secondary hover:text-text-primary transition-colors duration-100">
                   Companies
                 </Link>
-                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+                <button className="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-full transition-colors duration-100 text-sm font-medium">
                   Sign In
                 </button>
               </nav>
@@ -54,32 +54,31 @@ export default async function HomePage() {
         </header>
 
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center space-y-6">
-            <h2 className="text-5xl md:text-6xl font-bold text-white">
-              Earnings Calls,
-              <br />
-              <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <h2 className="text-4xl md:text-5xl font-bold text-text-primary">
+              Earnings Calls,{' '}
+              <span className="text-primary">
                 Visually Enhanced
               </span>
             </h2>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
               Transform boring earnings call audio into engaging visual summaries with charts, transcripts, and data-driven insights.
             </p>
-            <div className="flex items-center justify-center space-x-4">
+            <div className="flex items-center justify-center space-x-8 pt-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">{latestVideos.length}+</div>
-                <div className="text-sm text-slate-500">Videos</div>
+                <div className="text-2xl font-bold text-text-primary">{latestVideos.length}+</div>
+                <div className="text-sm text-text-tertiary">Videos</div>
               </div>
-              <div className="w-px h-12 bg-slate-700" />
+              <div className="w-px h-10 bg-border-light" />
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">50+</div>
-                <div className="text-sm text-slate-500">Companies</div>
+                <div className="text-2xl font-bold text-text-primary">50+</div>
+                <div className="text-sm text-text-tertiary">Companies</div>
               </div>
-              <div className="w-px h-12 bg-slate-700" />
+              <div className="w-px h-10 bg-border-light" />
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">Q4 2024</div>
-                <div className="text-sm text-slate-500">Latest</div>
+                <div className="text-2xl font-bold text-text-primary">Q4 2024</div>
+                <div className="text-sm text-text-tertiary">Latest</div>
               </div>
             </div>
           </div>
@@ -87,30 +86,30 @@ export default async function HomePage() {
 
         {/* Video Grid */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="mb-8">
-            <h3 className="text-2xl font-bold text-white mb-2">Latest Earnings Calls</h3>
-            <p className="text-slate-400">Watch visual summaries of recent earnings calls</p>
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold text-text-primary mb-1">Latest Earnings Calls</h3>
+            <p className="text-text-secondary text-sm">Watch visual summaries of recent earnings calls</p>
           </div>
 
           {latestVideos.length === 0 ? (
             <div className="text-center py-20">
               <div className="text-6xl mb-4">📊</div>
-              <h3 className="text-2xl font-bold text-white mb-2">Coming Soon</h3>
-              <p className="text-slate-400">
+              <h3 className="text-2xl font-semibold text-text-primary mb-2">Coming Soon</h3>
+              <p className="text-text-secondary">
                 We're generating amazing earnings call videos. Check back soon!
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {latestVideos.map(({ video, company }) => (
                 <Link
                   key={video.id}
                   href={`/${company?.ticker.toLowerCase()}/${video.slug}`}
                   className="group"
                 >
-                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden hover:border-blue-500/50 transition-all hover:shadow-lg hover:shadow-blue-500/10">
+                  <div className="rounded-xl overflow-hidden hover:bg-background-hover transition-colors duration-100">
                     {/* Thumbnail */}
-                    <div className="relative aspect-video bg-gradient-to-br from-slate-800 to-slate-900">
+                    <div className="relative aspect-video bg-background-elevated">
                       {video.data.thumbnailUrl ? (
                         <img
                           src={video.data.thumbnailUrl}
@@ -124,34 +123,27 @@ export default async function HomePage() {
                           </span>
                         </div>
                       )}
-                      <div className="absolute top-2 left-2 px-2 py-1 bg-black/80 rounded text-xs text-white font-medium">
-                        {video.quarter} {video.year}
+                      <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/90 rounded text-xs text-white font-medium">
+                        {video.data.duration ? (
+                          `${Math.floor(video.data.duration / 60)}:${String(video.data.duration % 60).padStart(2, '0')}`
+                        ) : '0:00'}
                       </div>
                     </div>
 
                     {/* Content */}
-                    <div className="p-4">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-sm font-bold text-blue-400">
-                          {company?.ticker}
-                        </span>
-                        <span className="text-slate-600">•</span>
-                        <span className="text-sm text-slate-500">
-                          {company?.data.industry}
-                        </span>
-                      </div>
-                      <h4 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-400 transition line-clamp-2">
+                    <div className="p-3">
+                      <h4 className="text-sm font-medium text-text-primary mb-1 line-clamp-2 leading-tight">
                         {video.data.title}
                       </h4>
-                      <div className="flex items-center justify-between text-sm text-slate-500">
-                        <span>
-                          {video.data.analytics?.views || 0} views
+                      <div className="flex items-center space-x-1 text-xs text-text-tertiary mb-1">
+                        <span className="font-semibold text-text-secondary">
+                          {company?.ticker}
                         </span>
-                        {video.data.duration && (
-                          <span>
-                            {Math.floor(video.data.duration / 60)}:{String(video.data.duration % 60).padStart(2, '0')}
-                          </span>
-                        )}
+                        <span>•</span>
+                        <span>{video.quarter} {video.year}</span>
+                      </div>
+                      <div className="text-xs text-text-tertiary">
+                        {video.data.analytics?.views || 0} views
                       </div>
                     </div>
                   </div>
@@ -162,9 +154,9 @@ export default async function HomePage() {
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-slate-800 mt-20">
+        <footer className="border-t border-border mt-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center text-slate-500 text-sm">
+            <div className="text-center text-text-tertiary text-xs">
               © 2024 EarningLens. Transform earnings calls into visual insights.
             </div>
           </div>

@@ -1,26 +1,82 @@
 @import "tailwindcss";
 
+/* YouTube-Compatible Dark Theme */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* YouTube Dark backgrounds (exact match) */
+  --background: #0F0F0F;
+  --background-elevated: #212121;
+  --background-hover: #272727;
+
+  /* EarningLens brand accent (financial blue - NOT YouTube red) */
+  --primary: #0EA5E9;
+  --primary-hover: #0284C7;
+  --primary-light: #38BDF8;
+  --primary-dark: #0369A1;
+
+  /* Financial data colors */
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+
+  /* Text (YouTube-style) */
+  --text-primary: #FFFFFF;
+  --text-secondary: #AAAAAA;
+  --text-tertiary: #717171;
+
+  /* Borders (subtle, like YouTube) */
+  --border: #272727;
+  --border-light: #3F3F3F;
+
+  /* Chart colors (distinct, accessible) */
+  --chart-blue: #3B82F6;
+  --chart-cyan: #06B6D4;
+  --chart-emerald: #10B981;
+  --chart-violet: #8B5CF6;
+  --chart-pink: #EC4899;
+  --chart-orange: #F97316;
 }
 
 @theme inline {
+  /* Background colors */
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background-elevated: var(--background-elevated);
+  --color-background-hover: var(--background-hover);
+
+  /* Primary brand */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+
+  /* Status colors */
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+
+  /* Text colors */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+
+  /* Borders */
+  --color-border: var(--border);
+  --color-border-light: var(--border-light);
+
+  /* Chart colors */
+  --color-chart-blue: var(--chart-blue);
+  --color-chart-cyan: var(--chart-cyan);
+  --color-chart-emerald: var(--chart-emerald);
+  --color-chart-violet: var(--chart-violet);
+  --color-chart-pink: var(--chart-pink);
+  --color-chart-orange: var(--chart-orange);
+
+  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
 }
