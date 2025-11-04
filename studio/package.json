@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "start": "remotion studio",
-    "render": "remotion render src/index.ts EarningsVideo out/output.mp4",
-    "render:aapl": "remotion render src/index.ts EarningsVideo out/AAPL-Q4-2024.mp4 --props='@./data/AAPL-Q4-2024.json'",
-    "render:aapl:full": "remotion render src/index.ts EarningsCallVideo out/AAPL-Q4-2024-full.mp4 --props='@./data/AAPL-Q4-2024-FULL.json'",
+    "render": "remotion render src/index.ts EarningsVideo ../sushi/videos/output/final.mp4",
+    "render:aapl": "remotion render src/index.ts EarningsVideo ../sushi/videos/aapl-q4-2024/output/final.mp4 --props='@./data/AAPL-Q4-2024.json'",
+    "render:aapl:full": "remotion render src/index.ts EarningsCallVideo ../sushi/videos/aapl-q4-2024/output/full.mp4 --props='@./data/AAPL-Q4-2024-FULL.json'",
     "upgrade": "remotion upgrade"
   },
   "dependencies": {

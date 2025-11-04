@@ -1,22 +1,31 @@
-# Sushi working directories (don't commit video files)
-uploads/
-downloads/
-
 # Python virtual environment
 .venv-sushi/
 
-# Generated files
-*.mp4
-*.mp3
-*.m4a
-*.wav
-*.json
-*.srt
-*.vtt
-*.txt
+# Large video/audio files (upload to R2, don't commit)
+videos/*/input/source.mp4
+videos/*/input/source.webm
+videos/*/input/audio.m4a
+videos/*/input/audio.wav
+videos/*/output/final.mp4
+videos/*/output/preview.mp4
+videos/*/output/*.mp4
 
-# Keep structure files
-!requirements.txt
-!README.md
-!*.py
-!*.sh
+# Keep small transcript and metadata files (DO commit)
+!videos/*/transcripts/*.json
+!videos/*/transcripts/*.vtt
+!videos/*/transcripts/*.srt
+!videos/*/transcripts/*.txt
+!videos/*/thumbnail/*.jpg
+!videos/*/thumbnail/*.png
+!videos/*/metadata.json
+
+# Working directories
+uploads/
+downloads/
+
+# Logs
+logs/*.log
+
+# Config with secrets
+config/.env
+config/*.key

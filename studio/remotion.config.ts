@@ -12,7 +12,8 @@ Config.setPixelFormat('yuv420p');
 Config.setChromiumOpenGlRenderer('angle');
 Config.setChromiumHeadlessMode(true);
 
-// Output settings
-Config.setOutputLocation('out');
+// Output settings - unified with sushi pipeline
+// All videos render to: ../sushi/videos/{video-id}/output/
+Config.setOutputLocation('../sushi/videos');
 
 export default Config;
