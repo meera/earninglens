@@ -7,6 +7,37 @@
 **Goal:** Build a monetizable SaaS platform via YouTube channel + website subscriptions
 **Timeline:** MVP in 1-2 days, 100 videos in 2 weeks, full platform in 4-6 weeks
 
+---
+
+## Recent Updates (November 2025)
+
+### 1. Updated Pricing Model
+- **Pro Tier:** $29.99 per seat/month (updated from $29/month)
+- **Team Tier:** $29.99 per seat/month (billed per seat, not flat $99/month)
+- **Free Tier:** Limited to 3 videos total (not per month) before paywall
+
+### 2. New Custom Video Request Service
+Added revenue stream for custom video production:
+- **Standard Service ($299):** 2 revisions, 5-7 day delivery
+- **Premium Service ($699):** Unlimited revisions, 3-5 day delivery
+- Users can upload video, provide YouTube URL, or request AI-generated content
+- Potential $10K+/month additional revenue at scale
+
+### 3. Entity Relationship Mapping (Key Differentiator)
+Built-in knowledge graph that surfaces cross-company relationships:
+- Track product mentions across companies (e.g., "Vision Pro" in Apple + Meta earnings)
+- Cross-reference SEC filings, earnings calls, and company websites
+- Show competitive dynamics and industry trends
+- **This is our competitive moat vs. YouTube**
+
+### 4. Revenue Model Update
+**Month 12 Target: $26,500/month**
+- YouTube ads: $1,500/month
+- Subscriptions: $15,000 MRR (500 seats × $29.99)
+- Custom videos: $10,000/month (20 requests/month)
+
+---
+
 ## Product Vision
 
 ### The Problem
@@ -244,22 +275,24 @@ EarningLens creates:
   - **Prompt to login at 50% mark**
 
 - **Free Tier (Logged In via Google One Tap):**
-  - Watch 3 full videos/month
+  - Watch 3 full videos total (not per month)
   - Basic chart interactions
   - Save videos to watchlist
   - Access quarterly report summaries
+  - After 3 videos, must upgrade to continue
 
-- **Pro Tier ($29/month):**
+- **Pro Tier ($29.99 per seat/month):**
   - Unlimited video access
   - Full interactive charts (zoom, filter, export)
   - Download transcripts and reports
   - Email alerts for earnings dates
   - API access (100 requests/day)
   - Ad-free experience
+  - Advanced search with entity relationship mapping
 
-- **Team Tier ($99/month):**
+- **Team Tier ($29.99 per seat/month):**
   - All Pro features
-  - Up to 10 team members
+  - Multiple team members (billed per seat)
   - Shared watchlists and notes
   - Custom alerts for specific companies
   - API access (1000 requests/day)
@@ -407,7 +440,518 @@ INSERT INTO video_engagement (
 - Early access to new earnings
 - Custom alerts
 
-### 6. Personalization & Recommendations
+### 6. Custom Video Request Service
+
+**Purpose:** Allow users to request custom earnings videos for companies not yet covered or for custom analysis
+
+**Pricing Tiers:**
+
+1. **Standard Service ($299)**
+   - Custom earnings video for any company/quarter
+   - Includes 2 revision rounds
+   - 5-7 business day delivery
+   - Professional video with charts, transcripts, and analysis
+   - Delivered via private YouTube link + website access
+
+2. **Premium Service ($699)**
+   - All Standard features
+   - Unlimited revisions until satisfied
+   - 3-5 business day delivery
+   - Priority support
+   - Custom chart requests
+   - Additional data analysis
+
+**Request Form Fields:**
+
+```typescript
+interface VideoRequestForm {
+  // Basic Info
+  company: string;          // Company name
+  ticker: string;           // Stock ticker (optional)
+  quarter: string;          // Q1, Q2, Q3, Q4
+  year: number;             // Year
+
+  // Video Source (pick one)
+  sourceType: 'upload' | 'youtube_url' | 'ai_generated';
+  uploadedFile?: File;      // If user uploads audio/video
+  youtubeUrl?: string;      // If user provides YouTube link
+
+  // AI-Generated Options (if sourceType = 'ai_generated')
+  aiInstructions?: string;  // Custom instructions for AI-generated video
+  dataPoints?: string[];    // Specific metrics to highlight
+
+  // Service Level
+  serviceLevel: 'standard' | 'premium'; // $299 or $699
+
+  // Additional Requirements
+  specialRequests?: string; // Custom charts, specific analysis, etc.
+  deliveryDate?: Date;      // Requested delivery date (if urgent)
+}
+```
+
+**User Flow:**
+
+```
+User clicks "Request Custom Video"
+  ↓
+Fill out form:
+  1. Enter company details (name, ticker, quarter, year)
+  2. Choose source:
+     - Upload audio/video file
+     - Provide YouTube URL
+     - Request AI-generated video
+  3. Select service level:
+     - Standard ($299, 2 revisions)
+     - Premium ($699, unlimited revisions)
+  4. Add special requests (optional)
+  ↓
+Payment via Stripe ($299 or $699)
+  ↓
+Video enters production queue
+  ↓
+User receives:
+  - Confirmation email with timeline
+  - Progress updates
+  - Draft video for review
+  - Final video + website access
+```
+
+**Implementation:**
+
+```typescript
+// app/request-video/page.tsx
+
+export default function RequestVideoPage() {
+  return (
+    <div className="max-w-2xl mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-6">Request Custom Video</h1>
+
+      <form>
+        {/* Company Details */}
+        <section>
+          <h2>Company Information</h2>
+          <input name="company" placeholder="Company Name" />
+          <input name="ticker" placeholder="Ticker (e.g., AAPL)" />
+          <select name="quarter">
+            <option>Q1</option>
+            <option>Q2</option>
+            <option>Q3</option>
+            <option>Q4</option>
+          </select>
+          <input type="number" name="year" placeholder="2024" />
+        </section>
+
+        {/* Video Source */}
+        <section>
+          <h2>Video Source</h2>
+          <div>
+            <input type="radio" name="sourceType" value="upload" />
+            <label>Upload Audio/Video File</label>
+            <input type="file" accept="audio/*,video/*" />
+          </div>
+
+          <div>
+            <input type="radio" name="sourceType" value="youtube_url" />
+            <label>Provide YouTube URL</label>
+            <input type="url" placeholder="https://youtube.com/watch?v=..." />
+          </div>
+
+          <div>
+            <input type="radio" name="sourceType" value="ai_generated" />
+            <label>AI-Generated Video ($299/$699)</label>
+            <textarea placeholder="Describe what you want in the video..." />
+          </div>
+        </section>
+
+        {/* Service Level */}
+        <section>
+          <h2>Service Level</h2>
+          <div className="border rounded p-4">
+            <input type="radio" name="serviceLevel" value="standard" />
+            <strong>Standard - $299</strong>
+            <p>Includes 2 revision rounds, 5-7 day delivery</p>
+          </div>
+
+          <div className="border rounded p-4">
+            <input type="radio" name="serviceLevel" value="premium" />
+            <strong>Premium - $699</strong>
+            <p>Unlimited revisions, 3-5 day delivery, priority support</p>
+          </div>
+        </section>
+
+        <button type="submit">
+          Proceed to Payment
+        </button>
+      </form>
+    </div>
+  );
+}
+```
+
+**Database Schema:**
+
+```sql
+CREATE TABLE video_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id),
+
+  -- Request details
+  company VARCHAR(255) NOT NULL,
+  ticker VARCHAR(10),
+  quarter VARCHAR(10),
+  year INTEGER,
+
+  -- Source
+  source_type VARCHAR(50), -- upload, youtube_url, ai_generated
+  uploaded_file_url TEXT,
+  youtube_url TEXT,
+  ai_instructions TEXT,
+
+  -- Service
+  service_level VARCHAR(50), -- standard, premium
+  amount_paid DECIMAL(10, 2), -- 299.00 or 699.00
+  stripe_payment_id VARCHAR(255),
+
+  -- Status
+  status VARCHAR(50) DEFAULT 'pending', -- pending, in_progress, review, completed
+  current_revision INTEGER DEFAULT 0,
+  max_revisions INTEGER, -- 2 for standard, NULL for premium
+
+  -- Delivery
+  draft_video_url TEXT,
+  final_video_url TEXT,
+  website_url TEXT,
+  delivered_at TIMESTAMP,
+
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### 7. Entity Relationship Mapping (Key Differentiator)
+
+**What Sets EarningLens Apart from YouTube:**
+
+While YouTube shows individual earnings call videos, EarningLens creates an **intelligent knowledge graph** that surfaces hidden relationships across companies, products, competitors, and market trends.
+
+**The Core Value:**
+
+> "If Product 1 is mentioned in your earnings call or SEC filing, and it's also mentioned by a competitor, we surface that relationship instantly."
+
+**How It Works:**
+
+```
+Apple mentions "Vision Pro" in Q4 2024 earnings
+  ↓
+EarningLens Knowledge Graph:
+  - Vision Pro appears in Apple SEC 10-Q
+  - Vision Pro mentioned in Meta earnings (competing with Quest 3)
+  - Vision Pro discussed on apple.com/vision
+  - Related searches: "AR headsets", "spatial computing"
+  ↓
+User watching Apple video sees:
+  ┌──────────────────────────────────────┐
+  │ 🔗 Related Mentions                  │
+  │                                      │
+  │ "Vision Pro" also mentioned in:      │
+  │ → Meta Q4 2024 (competitor)          │
+  │ → Apple 10-Q Filing (SEC)            │
+  │ → CES 2024 Coverage                  │
+  │                                      │
+  │ Related Products:                    │
+  │ → Meta Quest 3                       │
+  │ → Microsoft HoloLens                 │
+  └──────────────────────────────────────┘
+```
+
+**Data Sources for Entity Extraction:**
+
+1. **Earnings Call Transcripts**
+   - Extract product names, metrics, initiatives
+   - Identify mentions of competitors
+   - Track sentiment (positive, negative, neutral)
+
+2. **SEC Filings (10-K, 10-Q, 8-K)**
+   - Official product disclosures
+   - Risk factors mentioning competitors
+   - Financial data tied to products/segments
+
+3. **Company Websites**
+   - Investor relations pages
+   - Product pages
+   - Press releases
+
+4. **Competitor Cross-References**
+   - Track when Company A mentions Company B
+   - Identify market overlap
+   - Surface competitive dynamics
+
+**Example Use Cases:**
+
+**Use Case 1: Product Competition**
+```
+User searches: "iPhone"
+  ↓
+Results:
+  - Apple Q4 2024: "iPhone revenue up 6%"
+  - Samsung earnings: "Galaxy competing with iPhone"
+  - Alphabet earnings: "Pixel gaining share"
+
+Cross-references:
+  - SEC filing: Apple mentions "increased competition"
+  - Samsung website: "Galaxy S24 vs iPhone 15"
+```
+
+**Use Case 2: Industry Trends**
+```
+User searches: "cloud revenue"
+  ↓
+Results:
+  - Microsoft: Azure up 30%
+  - Amazon: AWS up 19%
+  - Google: Cloud up 28%
+
+Pattern detected:
+  "All major cloud providers growing 20%+ YoY"
+  Suggested: "Cloud computing trend analysis"
+```
+
+**Use Case 3: Supply Chain**
+```
+User watching NVIDIA Q4 2024
+  ↓
+Entity detected: "TSMC" (chip manufacturer)
+  ↓
+Related mentions:
+  - AMD earnings: "TSMC partnership"
+  - TSMC earnings: "GPU demand strong"
+  - Apple earnings: "TSMC capacity concerns"
+```
+
+**Technical Implementation:**
+
+```typescript
+// Database Schema for Entity Relationships
+
+CREATE TABLE entities (
+  id UUID PRIMARY KEY,
+  name VARCHAR(255) UNIQUE NOT NULL, -- "iPhone", "Vision Pro", "AWS"
+  type VARCHAR(50), -- product, company, technology, market
+  canonical_name VARCHAR(255), -- Normalized name
+  aliases JSONB, -- ["iPhone 15", "iPhone Pro", "AAPL iPhone"]
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE entity_mentions (
+  id UUID PRIMARY KEY,
+  entity_id UUID REFERENCES entities(id),
+  source_type VARCHAR(50), -- earnings_call, sec_filing, website
+  source_id UUID, -- video_id, filing_id, etc.
+  company_id UUID REFERENCES companies(id),
+
+  -- Context
+  mention_text TEXT, -- Surrounding text
+  sentiment VARCHAR(20), -- positive, negative, neutral
+  context_type VARCHAR(50), -- revenue, product_launch, risk_factor
+
+  -- Metadata
+  timestamp TIMESTAMP, -- When mentioned in video
+  page_number INTEGER, -- For SEC filings
+  url TEXT, -- Source URL
+
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE entity_relationships (
+  id UUID PRIMARY KEY,
+  entity_a_id UUID REFERENCES entities(id),
+  entity_b_id UUID REFERENCES entities(id),
+  relationship_type VARCHAR(50), -- competitor, supplier, partner
+  confidence DECIMAL(3, 2), -- 0.00 to 1.00
+
+  -- Evidence
+  evidence JSONB, -- Links to mentions, filings, etc.
+
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(entity_a_id, entity_b_id, relationship_type)
+);
+```
+
+**Search API:**
+
+```typescript
+// API endpoint for entity search
+// GET /api/search?q=iPhone&type=entity
+
+export async function GET(request: Request) {
+  const {searchParams} = new URL(request.url);
+  const query = searchParams.get('q');
+
+  // 1. Find entity
+  const entity = await db.entities.findFirst({
+    where: {
+      OR: [
+        {name: {contains: query, mode: 'insensitive'}},
+        {aliases: {array_contains: query}},
+      ],
+    },
+  });
+
+  if (!entity) {
+    return Response.json({error: 'Entity not found'}, {status: 404});
+  }
+
+  // 2. Get all mentions across sources
+  const mentions = await db.entity_mentions.findMany({
+    where: {entity_id: entity.id},
+    include: {
+      video: true,
+      company: true,
+    },
+    orderBy: {created_at: 'desc'},
+  });
+
+  // 3. Get related entities
+  const relationships = await db.entity_relationships.findMany({
+    where: {
+      OR: [
+        {entity_a_id: entity.id},
+        {entity_b_id: entity.id},
+      ],
+    },
+    include: {
+      entity_a: true,
+      entity_b: true,
+    },
+  });
+
+  // 4. Group by company
+  const byCompany = mentions.reduce((acc, mention) => {
+    const key = mention.company.ticker;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(mention);
+    return acc;
+  }, {});
+
+  return Response.json({
+    entity,
+    mentions: {
+      total: mentions.length,
+      byCompany,
+      bySource: {
+        earnings_calls: mentions.filter(m => m.source_type === 'earnings_call').length,
+        sec_filings: mentions.filter(m => m.source_type === 'sec_filing').length,
+        websites: mentions.filter(m => m.source_type === 'website').length,
+      },
+    },
+    relationships: relationships.map(r => ({
+      type: r.relationship_type,
+      entity: r.entity_a_id === entity.id ? r.entity_b : r.entity_a,
+      confidence: r.confidence,
+    })),
+  });
+}
+```
+
+**UI Component: Entity Relationship Widget**
+
+```tsx
+// components/EntityRelationships.tsx
+
+export function EntityRelationships({entityName}: {entityName: string}) {
+  const {data} = useSWR(`/api/search?q=${entityName}&type=entity`);
+
+  if (!data) return <div>Loading...</div>;
+
+  return (
+    <div className="border rounded-lg p-4">
+      <h3 className="font-bold text-lg mb-4">
+        "{data.entity.name}" mentioned across:
+      </h3>
+
+      {/* By Company */}
+      <div className="space-y-2">
+        {Object.entries(data.mentions.byCompany).map(([ticker, mentions]) => (
+          <div key={ticker} className="flex items-center justify-between">
+            <span>{ticker}</span>
+            <span className="text-sm text-gray-500">{mentions.length} mentions</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Related Entities */}
+      <div className="mt-4">
+        <h4 className="font-semibold mb-2">Related:</h4>
+        {data.relationships.map(rel => (
+          <Link
+            key={rel.entity.id}
+            href={`/search?q=${rel.entity.name}`}
+            className="block text-blue-600 hover:underline"
+          >
+            {rel.entity.name} ({rel.type})
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+**Example in Video Page:**
+
+```tsx
+// app/[company]/[videoSlug]/page.tsx
+
+export default async function VideoPage({params}) {
+  const video = await getVideo(params.videoSlug);
+
+  // Extract entities mentioned in this video
+  const entities = await db.entity_mentions.findMany({
+    where: {
+      source_type: 'earnings_call',
+      source_id: video.id,
+    },
+    include: {entity: true},
+  });
+
+  return (
+    <div className="grid grid-cols-3 gap-8">
+      {/* Video Player */}
+      <div className="col-span-2">
+        <YouTubePlayer videoId={video.youtube_id} />
+      </div>
+
+      {/* Entity Relationships Sidebar */}
+      <div className="col-span-1">
+        <h3 className="font-bold mb-4">Key Topics</h3>
+        {entities.map(mention => (
+          <EntityRelationships
+            key={mention.entity.id}
+            entityName={mention.entity.name}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+**Competitive Advantage:**
+
+| Feature | YouTube | EarningLens |
+|---------|---------|-------------|
+| Watch earnings videos | ✅ | ✅ |
+| Search by company | ✅ | ✅ |
+| Search by product/topic | ❌ | ✅ |
+| Cross-company comparisons | ❌ | ✅ |
+| SEC filing integration | ❌ | ✅ |
+| Competitor tracking | ❌ | ✅ |
+| Entity relationships | ❌ | ✅ |
+| Knowledge graph | ❌ | ✅ |
+
+**This is the "unfair advantage" that makes EarningLens more than just a video platform.**
+
+### 8. Personalization & Recommendations
 
 **Recommendation Engine:**
 
@@ -1051,9 +1595,34 @@ export async function GET(request: Request) {
 ### Website Metrics (Phase 3-4)
 - ✅ 10,000 monthly visitors (Month 2)
 - ✅ 5% conversion rate (free → paid)
-- ✅ $1,000 MRR (Month 3)
-- ✅ $5,000 MRR (Month 6)
-- Target: 100 paying subscribers by Month 6
+- ✅ $1,000 MRR from subscriptions (Month 3)
+- ✅ $5,000 MRR from subscriptions (Month 6)
+- Target: 100 paying subscribers by Month 6 (~$3,000 MRR at $29.99/seat)
+
+### Custom Video Revenue (Phase 4+)
+- ✅ 5 custom video requests/month (Month 4)
+- Target revenue: $1,500-3,500/month from custom videos
+  - Standard ($299): 3-4 requests/month
+  - Premium ($699): 1-2 requests/month
+- Potential scaling: 20 requests/month = $6,000-14,000/month additional revenue
+
+### Combined Revenue Targets
+**Month 3:**
+- YouTube ads: $200/month
+- Subscriptions: $1,000 MRR
+- **Total:** $1,200/month
+
+**Month 6:**
+- YouTube ads: $500/month
+- Subscriptions: $5,000 MRR
+- Custom videos: $2,000/month
+- **Total:** $7,500/month
+
+**Month 12:**
+- YouTube ads: $1,500/month
+- Subscriptions: $15,000 MRR (500 seats × $29.99)
+- Custom videos: $10,000/month
+- **Total:** $26,500/month
 
 ### Engagement Metrics
 - Average watch time: >5 minutes (target: 8 minutes)

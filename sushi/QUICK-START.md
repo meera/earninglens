@@ -16,11 +16,11 @@ cd ~/earninglens
 # This will:
 # - Create .venv Python virtual environment
 # - Install dependencies from requirements.txt
-# - Create config/.env from .env.example (if needed)
+# - Create .env from .env.example (if needed)
 # - Download Whisper models (optional)
 
 # 3. Edit .env file with your API keys
-nano sushi/config/.env
+nano .env
 
 # Required variables:
 # - OPENAI_API_KEY           (for LLM insights)
@@ -227,15 +227,15 @@ node scripts/render-video.js pltr-q3-2024
 
 ## Environment Variables
 
-All environment variables are stored in `config/.env` and loaded automatically by scripts.
+All environment variables are stored in `.env` (at project root) and loaded automatically by scripts.
 
 **Setup:**
 ```bash
-# Copy example file
-cp config/.env.example config/.env
+# Copy example file (from project root)
+cp .env.example .env
 
 # Edit with your credentials
-nano config/.env
+nano .env
 
 # Load in current shell session
 source sushi/load-env.sh

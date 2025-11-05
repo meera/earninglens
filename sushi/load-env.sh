@@ -3,7 +3,8 @@
 # Source this file: source sushi/load-env.sh
 
 SUSHI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="$SUSHI_DIR/config/.env"
+PROJECT_ROOT="$(cd "$SUSHI_DIR/.." && pwd)"
+ENV_FILE="$PROJECT_ROOT/.env"
 
 if [ -f "$ENV_FILE" ]; then
     # Load all environment variables from .env
@@ -27,7 +28,7 @@ else
     echo "⚠️  .env file not found: $ENV_FILE"
     echo ""
     echo "To create it:"
-    echo "  cp $SUSHI_DIR/config/.env.example $ENV_FILE"
+    echo "  cp $PROJECT_ROOT/.env.example $ENV_FILE"
     echo "  nano $ENV_FILE  # Add your API keys"
     return 1
 fi

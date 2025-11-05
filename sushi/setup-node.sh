@@ -124,19 +124,20 @@ echo "✓ Scripts are executable"
 
 # 6. Setup config
 echo ""
-if [ ! -f "$SUSHI_DIR/config/.env" ]; then
+PROJECT_ROOT="$(cd "$SUSHI_DIR/.." && pwd)"
+if [ ! -f "$PROJECT_ROOT/.env" ]; then
     echo "⚠ Config file not found"
     echo ""
     echo "Create your config file:"
-    echo "  cp $SUSHI_DIR/config/.env.example $SUSHI_DIR/config/.env"
-    echo "  nano $SUSHI_DIR/config/.env"
+    echo "  cp $PROJECT_ROOT/.env.example $PROJECT_ROOT/.env"
+    echo "  nano $PROJECT_ROOT/.env"
     echo ""
     echo "You'll need:"
     echo "  - OPENAI_API_KEY"
     echo "  - YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN"
     echo "  - DATABASE_URL"
 else
-    echo "✓ Config file exists: $SUSHI_DIR/config/.env"
+    echo "✓ Config file exists: $PROJECT_ROOT/.env"
 fi
 
 # 7. Test Remotion
@@ -158,7 +159,7 @@ echo "✓ Setup complete!"
 echo "========================================"
 echo ""
 echo "Next steps:"
-echo "  1. Configure credentials: nano sushi/config/.env"
+echo "  1. Configure credentials: nano .env"
 echo "  2. Test processing: ./sushi/scripts/process-earnings.sh test-video youtube <url>"
 echo ""
 echo "Available commands:"

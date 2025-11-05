@@ -152,8 +152,8 @@ git pull
 ./sushi/setup-node.sh
 
 # 3. Configure credentials
-cp sushi/config/.env.example sushi/config/.env
-nano sushi/config/.env
+cp .env.example .env
+nano .env
 
 # Add:
 # OPENAI_API_KEY=...

@@ -54,7 +54,7 @@ echo ""
 node - <<EOF
 const fs = require('fs');
 const {google} = require('googleapis');
-require('dotenv').config({path: '$SUSHI_DIR/config/.env'});
+require('dotenv').config({path: '$PROJECT_ROOT/.env'});
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.YOUTUBE_CLIENT_ID,

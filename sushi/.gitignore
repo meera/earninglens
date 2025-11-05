@@ -27,6 +27,6 @@ downloads/
 # Logs
 logs/*.log
 
-# Config with secrets
-config/.env
+# Config with secrets (now at root)
+# config/.env moved to root .env
 config/*.key

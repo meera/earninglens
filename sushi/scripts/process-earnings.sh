@@ -14,7 +14,7 @@ set -e  # Exit on error
 SUSHI_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Load environment variables from .env
-ENV_FILE="$SUSHI_DIR/config/.env"
+ENV_FILE="$PROJECT_ROOT/.env"
 if [ -f "$ENV_FILE" ]; then
     set -a  # Export all variables
     source "$ENV_FILE"
@@ -139,17 +139,17 @@ fi
 
 # Step 6: Upload to YouTube
 log_step "Step 6: Uploading to YouTube"
-if [ -f "$SUSHI_DIR/config/.env" ]; then
+if [ -f "$PROJECT_ROOT/.env" ]; then
     node "$SUSHI_DIR/scripts/upload-youtube.js" "$VIDEO_ID"
     log_success "Uploaded to YouTube"
 else
-    log_error "Config file not found. Run: cp sushi/config/.env.example sushi/config/.env"
+    log_error "Config file not found. Run: cp .env.example .env"
     log "Skipping YouTube upload..."
 fi
 
 # Step 7: Save to database
 log_step "Step 7: Saving to database"
-if [ -f "$SUSHI_DIR/config/.env" ]; then
+if [ -f "$PROJECT_ROOT/.env" ]; then
     node "$SUSHI_DIR/scripts/save-to-db.js" "$VIDEO_ID"
     log_success "Saved to database"
 else
