@@ -71,9 +71,12 @@ public/audio/**/*.srt
 public/audio/**/*.vtt
 public/audio/**/*.txt
 
-# Pipeline working directories
+# Pipeline working directories and state
 lens/uploads/
 lens/downloads/
+.state.json
+.state.lock
+*.json.tmp
 
 # Logs
 *.log

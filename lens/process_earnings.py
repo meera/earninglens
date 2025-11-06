@@ -3,6 +3,11 @@
 Unified earnings video processing orchestrator.
 Can run all steps or individual steps with state tracking.
 
+Supports parallel processing of multiple videos:
+- Each video has its own state file: DOWNLOADS_DIR/<video_id>/.state.json
+- File locking prevents race conditions
+- Safe to run multiple videos concurrently
+
 Usage:
     # Run all steps
     python process_earnings.py --url "https://youtube.com/watch?v=..."
@@ -12,6 +17,11 @@ Usage:
 
     # Run from specific step onwards
     python process_earnings.py --url "..." --from transcribe
+
+    # Parallel processing (multiple terminals/processes)
+    python process_earnings.py --url "https://youtube.com/watch?v=video1" &
+    python process_earnings.py --url "https://youtube.com/watch?v=video2" &
+    python process_earnings.py --url "https://youtube.com/watch?v=video3" &
 """
 
 import sys
@@ -20,6 +30,8 @@ import json
 import argparse
 import subprocess
 import re
+import fcntl
+import time
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, List
@@ -86,12 +98,13 @@ class Logger:
 
 
 class StateManager:
-    """Manage processing state"""
+    """Manage processing state (per-video, parallel-safe)"""
 
     def __init__(self, video_id: str):
         self.video_id = video_id
         self.state_file = DOWNLOADS_DIR / video_id / ".state.json"
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
+        self.lock_file = DOWNLOADS_DIR / video_id / ".state.lock"
 
     def get_state(self, step: str) -> str:
         """Get status of a step"""
@@ -114,21 +127,40 @@ class StateManager:
         return state.get("steps", {}).get(step, {}).get("data", {}).get(key)
 
     def update_state(self, step: str, status: str, data: Dict):
-        """Update state for a step"""
-        if self.state_file.exists():
-            with open(self.state_file, 'r') as f:
-                state = json.load(f)
-        else:
-            state = {"steps": {}}
+        """Update state for a step (thread-safe with file locking)"""
+        # Acquire lock
+        with open(self.lock_file, 'w') as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
 
-        state["steps"][step] = {
-            "status": status,
-            "timestamp": datetime.now().isoformat(),
-            "data": data
-        }
+            try:
+                # Read current state
+                if self.state_file.exists():
+                    with open(self.state_file, 'r') as f:
+                        state = json.load(f)
+                else:
+                    state = {
+                        "video_id": self.video_id,
+                        "started_at": datetime.now().isoformat(),
+                        "steps": {}
+                    }
 
-        with open(self.state_file, 'w') as f:
-            json.dump(state, f, indent=2)
+                # Update state
+                state["steps"][step] = {
+                    "status": status,
+                    "timestamp": datetime.now().isoformat(),
+                    "data": data
+                }
+                state["last_updated"] = datetime.now().isoformat()
+
+                # Write state atomically
+                temp_file = self.state_file.with_suffix('.json.tmp')
+                with open(temp_file, 'w') as f:
+                    json.dump(state, f, indent=2)
+                temp_file.replace(self.state_file)
+
+            finally:
+                # Release lock
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
 
 class EarningsProcessor:
@@ -273,16 +305,33 @@ class EarningsProcessor:
         quarter = self.state.get_data("parse", "quarter")
         company_dir = ORGANIZED_DIR / ticker / quarter
         input_file = company_dir / "input" / "source.mp4"
-        output_file = company_dir / "transcripts" / "transcript.json"
 
         if not input_file.exists():
             raise FileNotFoundError("Input file not found. Run previous steps first.")
 
         script = PIPELINE_DIR / "transcribe.py"
-        self._run_python_script(script, [str(input_file), "--output", str(output_file)])
+        # transcribe.py accepts: filepath, model_name (optional), language (optional)
+        # Outputs are saved automatically to same directory as input
+        self._run_python_script(script, [str(input_file), "medium"])
+
+        # Move transcript files from input/ to transcripts/ directory
+        import shutil
+        input_dir = company_dir / "input"
+        transcript_dir = company_dir / "transcripts"
+
+        # Move all transcript files to transcripts/ directory
+        shutil.move(str(input_dir / "source.json"), str(transcript_dir / "transcript.json"))
+        shutil.move(str(input_dir / "source.srt"), str(transcript_dir / "transcript.srt"))
+        shutil.move(str(input_dir / "source.vtt"), str(transcript_dir / "transcript.vtt"))
+        shutil.move(str(input_dir / "source.txt"), str(transcript_dir / "transcript.txt"))
+        shutil.move(str(input_dir / "source.paragraphs.json"), str(transcript_dir / "paragraphs.json"))
 
         self.state.update_state("transcribe", "completed", {
-            "transcript": str(output_file)
+            "transcript_json": str(transcript_dir / "transcript.json"),
+            "transcript_srt": str(transcript_dir / "transcript.srt"),
+            "transcript_vtt": str(transcript_dir / "transcript.vtt"),
+            "transcript_txt": str(transcript_dir / "transcript.txt"),
+            "paragraphs_json": str(transcript_dir / "paragraphs.json")
         })
         self.logger.success("Transcription complete")
 

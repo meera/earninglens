@@ -1,18 +1,19 @@
-# Sushi Pipeline - Earnings Video Processing
+# Lens Pipeline - Earnings Video Processing
 
 Complete Python-based pipeline for processing earnings call videos. Works on both Mac and Linux.
+
+**Supports parallel processing** - process multiple videos simultaneously with automatic state management.
 
 ## Quick Start
 
 ```bash
 # Setup (one time)
-cd ~/earninglens/sushi
-python3 -m venv .venv
+cd ~/earninglens
 source .venv/bin/activate
 pip install -r requirements.txt
 
 # Process a video (all steps)
-python process_earnings.py --url "https://www.youtube.com/watch?v=jUnV3LiN0_k"
+python lens/process_earnings.py --url "https://www.youtube.com/watch?v=jUnV3LiN0_k"
 ```
 
 ## What It Does
