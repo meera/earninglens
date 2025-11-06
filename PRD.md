@@ -169,28 +169,88 @@ EarningLens creates:
 
 ### 1. Video Generation Pipeline
 
-**Phase 1: MVP (Manual + Remotion)**
-- Input: Earnings call audio + transcript + company data
-- Process:
-  1. Create Remotion composition with:
-     - Audio sync
-     - Transcript overlay
-     - Static charts/graphs
-     - Company logos
-  2. Render on GPU machine
-  3. Upload to R2
-  4. Manually upload to YouTube
+**Hybrid Workflow: Automated Prep + Manual Composition**
 
-**Phase 2: Automation**
-- Auto-fetch earnings call data via APIs
-- Generate charts programmatically
-- Auto-upload to YouTube via API
-- Batch processing (100+ videos)
+The pipeline is split into automated asset preparation (Steps 1-5) and manual creative work (Step 6):
 
-**Phase 3: Real-time**
-- Live earnings call processing
-- Real-time chart updates
-- Same-day video publication
+**Steps 1-5: Automated Asset Preparation**
+```bash
+# Run on GPU machine (sushi)
+python lens/process_earnings.py --url "https://youtube.com/watch?v=..." --to insights
+```
+
+This produces:
+1. **Download** - YouTube video via RapidAPI
+2. **Parse** - Auto-detect company, ticker, quarter
+3. **Remove Silence** - Trim initial silence from video
+4. **Transcribe** - Whisper GPU transcription → JSON, SRT, VTT, TXT
+5. **Extract Insights** - LLM analysis → key metrics, highlights
+
+**Output Structure:**
+```
+/var/earninglens/
+└── PLTR/
+    └── Q3-2025/
+        ├── input/
+        │   └── source.mp4              # Trimmed audio (silence removed)
+        ├── transcripts/
+        │   ├── transcript.json         # Full Whisper output
+        │   ├── transcript.srt          # Captions
+        │   ├── transcript.vtt          # WebVTT
+        │   ├── transcript.txt          # Plain text
+        │   ├── paragraphs.json         # LLM-friendly format
+        │   └── insights.json           # Extracted insights
+        ├── composition/                # Generated composition scaffold
+        │   ├── props.json              # Auto-generated props
+        │   └── assets/                 # Company logo, charts, etc.
+        ├── take1/                      # Multiple render versions
+        │   ├── final.mp4
+        │   └── thumbnail.jpg
+        └── take2/
+```
+
+**Step 6: Manual Composition (Remotion Studio)**
+```bash
+# Open Remotion Studio
+cd ~/earninglens
+npm run remotion
+```
+
+**Creative Workflow:**
+- Pipeline generates composition scaffold from template
+- Each video gets custom composition file: `studio/src/compositions/PLTR_Q3_2025.tsx`
+- Designer refines visuals, timing, charts, animations in Studio
+- Preview and iterate until satisfied
+- Render final video (take1, take2, etc.)
+
+**Rationale for Manual Step:**
+- Each earnings call is unique (different metrics, highlights, sentiment)
+- Custom visual storytelling requires creative judgment
+- Remotion Studio provides real-time preview and iteration
+- Quality over speed in early phase (first 10-100 videos)
+- Template evolves based on what works
+
+**Step 7: Upload to YouTube**
+```bash
+# Automated upload once composition is rendered
+python lens/process_earnings.py --url "..." --step upload
+```
+
+**Parallel Processing Support:**
+Since Steps 1-5 are automated, you can process multiple videos simultaneously:
+```bash
+# Queue multiple videos for asset preparation
+python lens/process_earnings.py --url "video1" --to insights &
+python lens/process_earnings.py --url "video2" --to insights &
+python lens/process_earnings.py --url "video3" --to insights &
+
+# Then work on compositions one-by-one in Studio
+```
+
+**Future Optimization:**
+- Phase 2: Standardized composition templates (reduce manual work)
+- Phase 3: AI-generated compositions based on insights
+- Phase 4: Fully automated pipeline for standard earnings calls
 
 ### 2. YouTube Integration
 
