@@ -1,0 +1,32 @@
+{
+  "ticker": "PLTR",
+  "name": "Palantir Technologies",
+  "brandColors": {
+    "primary": "#0033A0",
+    "secondary": "#4A90E2",
+    "accent": "#FF6B35",
+    "background": "#0a0e1a",
+    "backgroundGradient": ["#0a0e1a", "#1a1f2e"],
+    "text": "#ffffff",
+    "textSecondary": "#94a3b8"
+  },
+  "typography": {
+    "heading": "Inter, system-ui, sans-serif",
+    "body": "Inter, system-ui, sans-serif",
+    "mono": "JetBrains Mono, monospace",
+    "headingWeight": "700",
+    "bodyWeight": "400"
+  },
+  "logo": {
+    "url": "https://logo.clearbit.com/palantir.com",
+    "backgroundColor": "#0033A0",
+    "position": "top-left"
+  },
+  "visualStyle": "tech-corporate",
+  "animations": {
+    "speed": "medium",
+    "style": "professional",
+    "transitions": "smooth"
+  },
+  "industry": "enterprise-software"
+}

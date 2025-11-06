@@ -16,6 +16,7 @@ import {
 } from './compositions/Examples/AnimatedAssets';
 import { SubscribeExample as SubscribeLowerThirdExample } from './compositions/Examples/SubscribeExample';
 import { ThemeExample } from './compositions/ThemeExample';
+import { EnhancementsDemo } from './compositions/EnhancementsDemo';
 
 /**
  * Root composition with three sections:

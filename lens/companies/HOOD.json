@@ -1,0 +1,32 @@
+{
+  "ticker": "HOOD",
+  "name": "Robinhood",
+  "brandColors": {
+    "primary": "#00C805",
+    "secondary": "#00E805",
+    "accent": "#FF6154",
+    "background": "#000000",
+    "backgroundGradient": ["#000000", "#1a1a1a"],
+    "text": "#ffffff",
+    "textSecondary": "#a0a0a0"
+  },
+  "typography": {
+    "heading": "Inter, system-ui, sans-serif",
+    "body": "Inter, system-ui, sans-serif",
+    "mono": "JetBrains Mono, monospace",
+    "headingWeight": "700",
+    "bodyWeight": "400"
+  },
+  "logo": {
+    "url": "https://logo.clearbit.com/robinhood.com",
+    "backgroundColor": "#00C805",
+    "position": "top-left"
+  },
+  "visualStyle": "modern-bold",
+  "animations": {
+    "speed": "fast",
+    "style": "energetic",
+    "transitions": "smooth"
+  },
+  "industry": "fintech"
+}

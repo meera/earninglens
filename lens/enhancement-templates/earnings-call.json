@@ -1,0 +1,100 @@
+{
+  "name": "Standard Earnings Call",
+  "description": "Default enhancements for all earnings videos",
+  "version": "1.0",
+  "enhancements": [
+    {
+      "id": "title-card",
+      "type": "animated-title",
+      "timing": {
+        "start": 0,
+        "duration": 5
+      },
+      "config": {
+        "template": "{company} Q{quarter} {year} Earnings Call",
+        "animation": "fade-slide-up",
+        "showLogo": true
+      }
+    },
+    {
+      "id": "subscribe-start",
+      "type": "subscribe-button",
+      "timing": {
+        "start": 2,
+        "duration": 3
+      },
+      "config": {
+        "position": "bottom-right",
+        "animation": "slide-in",
+        "message": "Subscribe for more earnings insights"
+      }
+    },
+    {
+      "id": "logo-watermark",
+      "type": "company-logo",
+      "timing": {
+        "start": 0,
+        "persistent": true
+      },
+      "config": {
+        "position": "top-left",
+        "size": "small",
+        "opacity": 0.8
+      }
+    },
+    {
+      "id": "chapter-bar",
+      "type": "chapter-progress",
+      "timing": {
+        "start": 0,
+        "persistent": true
+      },
+      "config": {
+        "position": "top",
+        "height": 4,
+        "showChapterName": true
+      }
+    },
+    {
+      "id": "speaker-labels",
+      "type": "speaker-identification",
+      "timing": {
+        "start": 0,
+        "persistent": true,
+        "autoDetect": true
+      },
+      "config": {
+        "position": "bottom-left",
+        "showTitle": true,
+        "showPhoto": false,
+        "fadeInOut": true
+      }
+    },
+    {
+      "id": "transcript-captions",
+      "type": "live-captions",
+      "timing": {
+        "start": 0,
+        "persistent": true
+      },
+      "config": {
+        "position": "bottom-center",
+        "maxLines": 2,
+        "highlightMetrics": true
+      }
+    },
+    {
+      "id": "cta-end",
+      "type": "call-to-action",
+      "timing": {
+        "start": -10,
+        "duration": 10
+      },
+      "config": {
+        "message": "View full analysis at EarningLens.com",
+        "url": "https://earninglens.com/{ticker}/{quarter}-{year}",
+        "animation": "fade-in"
+      }
+    }
+  ]
+}
