@@ -265,7 +265,536 @@ python lens/process_earnings.py --url "video3" --to insights &
 - Phase 3: AI-generated compositions based on insights
 - Phase 4: Fully automated pipeline for standard earnings calls
 
-### 2. YouTube Integration
+### 2. Thumbnail Generation System
+
+**Pipeline Integration:** Thumbnails are generated **after successful video render** as part of the upload preparation step.
+
+**Design Philosophy:**
+- ✅ **Uniform channel identity** - Instantly recognizable as EarningLens content
+- ✅ **Company branding** - Showcase individual company colors and graphics
+- ✅ **Professional appearance** - High-quality, clean design
+- ✅ **Configurable branding** - Easy to update as MVP evolves
+
+#### Recommended Design Options
+
+**Option A: Header + Hero Layout (RECOMMENDED)**
+
+```
+┌─────────────────────────────────────────┐
+│ EarningLens │ Q3 2025                   │  ← EarningLens header bar
+├─────────────────────────────────────────┤
+│                                         │
+│         [COMPANY LOGO]                  │  ← Company branding zone
+│                                         │
+│         ROBINHOOD                       │
+│                                         │
+│    Revenue: $1.3B                       │  ← Key metric callout
+│    ↑ 100% YoY                           │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+**Specifications:**
+- **Top bar:** EarningLens color (#007AFF or configurable) with logo + quarter
+- **Main area:** Company brand color as background gradient
+- **Center:** Company logo (large, prominent)
+- **Bottom third:** Key metric highlight (revenue, EPS, or biggest win)
+- **Dimensions:** 1280x720px (YouTube standard)
+
+**Why this works:**
+- Clear hierarchy (EarningLens first, then company)
+- Recognizable at small sizes (YouTube thumbnails)
+- Balanced branding (both brands represented)
+- Metric preview (entices clicks)
+
+**Option B: Corner Badge Layout**
+
+```
+┌─────────────────────────────────────────┐
+│  [EL]                                   │  ← Small corner badge
+│                                         │
+│         [COMPANY LOGO]                  │
+│                                         │
+│         PALANTIR                        │
+│                                         │
+│    🚀 Beat Estimates by 25%            │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+**Specifications:**
+- **Corner badge:** Small EarningLens logo/icon (80x80px, top-left)
+- **Full background:** Company brand color
+- **Main focus:** Company identity dominates
+- **Bottom:** Emotional headline (beat/miss/surprise)
+
+**Why this works:**
+- Company takes center stage
+- EarningLens presence is subtle but consistent
+- Emotional hook drives clicks
+
+**Option C: Split Screen Layout**
+
+```
+┌─────────────┬───────────────────────────┐
+│             │                           │
+│  Earning    │    [COMPANY LOGO]         │
+│   Lens      │                           │
+│             │    ROBINHOOD              │
+│  [EL LOGO]  │                           │
+│             │    Revenue: $1.3B         │
+│             │    ↑ 100% YoY             │
+│             │                           │
+└─────────────┴───────────────────────────┘
+    30%                  70%
+```
+
+**Specifications:**
+- **Left 30%:** EarningLens branded column (fixed color)
+- **Right 70%:** Company content (brand color background)
+- **Vertical separator:** Clean line or gradient blend
+
+**Why this works:**
+- Clear visual separation
+- Both brands get dedicated space
+- Professional, modern look
+
+**Option D: Gradient Blend (Not Recommended)**
+
+```
+┌─────────────────────────────────────────┐
+│  [Gradient: EarningLens → Company]      │
+│                                         │
+│         [COMPANY LOGO]                  │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+**Why NOT recommended:**
+- Can look muddy at small sizes
+- Brand colors may clash
+- Less clear visual hierarchy
+
+#### Recommended Choice: **Option A (Header + Hero)**
+
+**Rationale:**
+- Best balance of both brands
+- Clear hierarchy (viewers know it's EarningLens)
+- Company gets prominent placement
+- Metric preview drives engagement
+- Scales well to mobile thumbnails
+- Easy to template and automate
+
+#### Technical Implementation
+
+**1. Configuration File Structure**
+
+```typescript
+// config/branding.ts
+
+export const EARNINGLENS_BRANDING = {
+  name: process.env.NEXT_PUBLIC_BRAND_NAME || 'EarningLens',
+
+  colors: {
+    primary: process.env.NEXT_PUBLIC_BRAND_PRIMARY || '#007AFF',
+    secondary: process.env.NEXT_PUBLIC_BRAND_SECONDARY || '#5AC8FA',
+    text: process.env.NEXT_PUBLIC_BRAND_TEXT || '#FFFFFF',
+    background: process.env.NEXT_PUBLIC_BRAND_BG || '#0A0A0A',
+  },
+
+  logo: {
+    path: process.env.NEXT_PUBLIC_BRAND_LOGO || '/logos/earninglens.png',
+    cornerBadge: process.env.NEXT_PUBLIC_BRAND_BADGE || '/logos/el-badge.png',
+  },
+
+  typography: {
+    headerFont: process.env.NEXT_PUBLIC_BRAND_FONT || 'Inter',
+    headerSize: '36px',
+    metricFont: process.env.NEXT_PUBLIC_BRAND_METRIC_FONT || 'Inter',
+    metricSize: '48px',
+  },
+};
+
+// Also export for Python pipeline
+export const BRANDING_CONFIG_JSON = JSON.stringify(EARNINGLENS_BRANDING);
+```
+
+**2. Python Branding Config**
+
+```python
+# lens/config/branding.py
+
+import os
+import json
+
+EARNINGLENS_BRANDING = {
+    "name": os.getenv("BRAND_NAME", "EarningLens"),
+
+    "colors": {
+        "primary": os.getenv("BRAND_PRIMARY", "#007AFF"),
+        "secondary": os.getenv("BRAND_SECONDARY", "#5AC8FA"),
+        "text": os.getenv("BRAND_TEXT", "#FFFFFF"),
+        "background": os.getenv("BRAND_BG", "#0A0A0A"),
+    },
+
+    "logo": {
+        "path": os.getenv("BRAND_LOGO", "/var/earninglens/assets/earninglens.png"),
+        "corner_badge": os.getenv("BRAND_BADGE", "/var/earninglens/assets/el-badge.png"),
+    },
+
+    "typography": {
+        "header_font": os.getenv("BRAND_FONT", "Inter"),
+        "header_size": 36,
+        "metric_font": os.getenv("BRAND_METRIC_FONT", "Inter"),
+        "metric_size": 48,
+    },
+}
+
+def get_branding_config():
+    """Get current branding configuration"""
+    return EARNINGLENS_BRANDING
+
+def save_branding_config(output_path: str):
+    """Save branding config to JSON for Node.js/Remotion"""
+    with open(output_path, 'w') as f:
+        json.dump(EARNINGLENS_BRANDING, f, indent=2)
+```
+
+**3. Environment Variables**
+
+```bash
+# .env.local - EarningLens Branding Configuration
+
+# Brand Identity (easily update as MVP evolves)
+NEXT_PUBLIC_BRAND_NAME="EarningLens"
+BRAND_NAME="EarningLens"
+
+# Brand Colors (primary brand identity)
+NEXT_PUBLIC_BRAND_PRIMARY="#007AFF"
+NEXT_PUBLIC_BRAND_SECONDARY="#5AC8FA"
+NEXT_PUBLIC_BRAND_TEXT="#FFFFFF"
+NEXT_PUBLIC_BRAND_BG="#0A0A0A"
+
+# Python-side colors (same values)
+BRAND_PRIMARY="#007AFF"
+BRAND_SECONDARY="#5AC8FA"
+BRAND_TEXT="#FFFFFF"
+BRAND_BG="#0A0A0A"
+
+# Logo Assets
+NEXT_PUBLIC_BRAND_LOGO="/logos/earninglens.png"
+NEXT_PUBLIC_BRAND_BADGE="/logos/el-badge.png"
+BRAND_LOGO="/var/earninglens/assets/earninglens.png"
+BRAND_BADGE="/var/earninglens/assets/el-badge.png"
+
+# Typography
+NEXT_PUBLIC_BRAND_FONT="Inter"
+BRAND_FONT="Inter"
+```
+
+**Why this approach:**
+- ✅ Single source of truth via environment variables
+- ✅ Easy to rebrand (change env vars, restart)
+- ✅ Shared between Python (pipeline) and TypeScript (web)
+- ✅ No hardcoded values in codebase
+- ✅ Can A/B test different brand colors easily
+
+**4. Thumbnail Generation Script**
+
+```python
+# lens/generate_thumbnail.py
+
+from PIL import Image, ImageDraw, ImageFont
+import os
+from config.branding import get_branding_config
+
+def generate_thumbnail(
+    company_name: str,
+    ticker: str,
+    quarter: str,
+    year: int,
+    key_metric: dict,  # e.g., {"label": "Revenue", "value": "$1.3B", "change": "↑ 100% YoY"}
+    company_logo_path: str,
+    company_brand_color: str,
+    output_path: str,
+):
+    """Generate YouTube thumbnail using Option A (Header + Hero) layout"""
+
+    # Get EarningLens branding from config
+    branding = get_branding_config()
+
+    # Create canvas (YouTube standard: 1280x720)
+    img = Image.new('RGB', (1280, 720), company_brand_color)
+    draw = ImageDraw.Draw(img)
+
+    # Load fonts
+    header_font = ImageFont.truetype(f"/usr/share/fonts/truetype/{branding['typography']['header_font']}.ttf", branding['typography']['header_size'])
+    metric_font = ImageFont.truetype(f"/usr/share/fonts/truetype/{branding['typography']['metric_font']}.ttf", branding['typography']['metric_size'])
+    company_font = ImageFont.truetype("Arial-Bold.ttf", 64)
+
+    # 1. Draw EarningLens header bar (top 100px)
+    draw.rectangle([(0, 0), (1280, 100)], fill=branding['colors']['primary'])
+
+    # EarningLens logo + name in header
+    if os.path.exists(branding['logo']['path']):
+        logo = Image.open(branding['logo']['path']).resize((60, 60))
+        img.paste(logo, (30, 20), logo if logo.mode == 'RGBA' else None)
+
+    # Header text: "EarningLens | Q3 2025"
+    draw.text((110, 35), f"{branding['name']} | {quarter} {year}",
+              fill=branding['colors']['text'], font=header_font)
+
+    # 2. Company logo (center, large)
+    if os.path.exists(company_logo_path):
+        company_logo = Image.open(company_logo_path)
+        # Resize to fit (max 300x300)
+        company_logo.thumbnail((300, 300), Image.LANCZOS)
+        logo_x = (1280 - company_logo.width) // 2
+        logo_y = 180
+        img.paste(company_logo, (logo_x, logo_y),
+                  company_logo if company_logo.mode == 'RGBA' else None)
+
+    # 3. Company name below logo
+    company_bbox = draw.textbbox((0, 0), company_name.upper(), font=company_font)
+    company_width = company_bbox[2] - company_bbox[0]
+    company_x = (1280 - company_width) // 2
+    draw.text((company_x, 380), company_name.upper(),
+              fill=branding['colors']['text'], font=company_font)
+
+    # 4. Key metric (bottom third)
+    metric_text = f"{key_metric['label']}: {key_metric['value']}"
+    change_text = key_metric.get('change', '')
+
+    # Draw metric with shadow for depth
+    metric_bbox = draw.textbbox((0, 0), metric_text, font=metric_font)
+    metric_width = metric_bbox[2] - metric_bbox[0]
+    metric_x = (1280 - metric_width) // 2
+    metric_y = 520
+
+    # Shadow
+    draw.text((metric_x + 3, metric_y + 3), metric_text,
+              fill='#000000', font=metric_font)
+    # Main text
+    draw.text((metric_x, metric_y), metric_text,
+              fill=branding['colors']['text'], font=metric_font)
+
+    # Change indicator
+    if change_text:
+        change_bbox = draw.textbbox((0, 0), change_text, font=metric_font)
+        change_width = change_bbox[2] - change_bbox[0]
+        change_x = (1280 - change_width) // 2
+        change_y = 600
+
+        # Determine color (green for up, red for down)
+        change_color = '#00FF00' if '↑' in change_text else '#FF0000' if '↓' in change_text else '#FFFFFF'
+
+        draw.text((change_x, change_y), change_text,
+                  fill=change_color, font=metric_font)
+
+    # Save
+    img.save(output_path, 'JPEG', quality=95, optimize=True)
+    print(f"✅ Thumbnail saved: {output_path}")
+
+# Example usage
+if __name__ == "__main__":
+    generate_thumbnail(
+        company_name="Robinhood",
+        ticker="HOOD",
+        quarter="Q3",
+        year=2025,
+        key_metric={
+            "label": "Revenue",
+            "value": "$1.3B",
+            "change": "↑ 100% YoY"
+        },
+        company_logo_path="/var/earninglens/assets/logos/HOOD.png",
+        company_brand_color="#00C805",  # Robinhood green
+        output_path="/var/earninglens/HOOD/Q3-2025/take1/thumbnail.jpg"
+    )
+```
+
+**5. Integration with Pipeline**
+
+```python
+# lens/process_earnings.py (add thumbnail generation step)
+
+from generate_thumbnail import generate_thumbnail
+from config.branding import get_branding_config
+
+def process_video(youtube_url: str, steps: list):
+    """Main pipeline with thumbnail generation"""
+
+    # ... existing steps (download, parse, transcribe, insights) ...
+
+    # After successful render
+    if 'render' in steps and render_successful:
+
+        # Extract key metric from insights.json
+        insights = load_json(f"{output_dir}/insights.json")
+        key_metric = extract_key_metric(insights)  # Get most impactful metric
+
+        # Get company branding
+        company_branding = load_json(f"lens/companies/{ticker}.json")
+
+        # Generate thumbnail
+        thumbnail_path = f"{output_dir}/thumbnail.jpg"
+        generate_thumbnail(
+            company_name=company_branding['name'],
+            ticker=ticker,
+            quarter=quarter,
+            year=year,
+            key_metric=key_metric,
+            company_logo_path=company_branding['logo']['path'],
+            company_brand_color=company_branding['brandColors']['primary'],
+            output_path=thumbnail_path,
+        )
+
+        # Update state
+        update_state(video_id, 'thumbnail', {
+            'status': 'completed',
+            'path': thumbnail_path,
+            'timestamp': datetime.now().isoformat()
+        })
+
+        print(f"✅ Thumbnail generated: {thumbnail_path}")
+
+def extract_key_metric(insights: dict) -> dict:
+    """Extract the most impactful metric for thumbnail"""
+
+    # Priority order: Revenue > EPS > Subscriber growth > Guidance
+    if 'revenue' in insights and insights['revenue'].get('change_percent'):
+        return {
+            'label': 'Revenue',
+            'value': insights['revenue']['current_formatted'],
+            'change': f"↑ {insights['revenue']['change_percent']}% YoY" if insights['revenue']['change_percent'] > 0 else f"↓ {abs(insights['revenue']['change_percent'])}% YoY"
+        }
+
+    if 'eps' in insights and insights['eps'].get('beat_estimate'):
+        return {
+            'label': 'EPS Beat',
+            'value': insights['eps']['actual'],
+            'change': f"🎯 Beat by {insights['eps']['beat_percent']}%"
+        }
+
+    # Fallback
+    return {
+        'label': 'Earnings',
+        'value': f"{quarter} {insights.get('year', '')}",
+        'change': ''
+    }
+```
+
+**6. Updated Pipeline Flow**
+
+```bash
+# Complete pipeline with thumbnail generation
+
+1. Download video from YouTube        ✅
+2. Parse metadata (ticker, quarter)   ✅
+3. Remove silence                      ✅
+4. Transcribe (Whisper)               ✅
+5. Extract insights (GPT-4o)          ✅
+6. Render video (Remotion)            ✅
+7. Generate thumbnail                 ✅ ← NEW STEP
+8. Upload to YouTube (with thumbnail) ✅
+```
+
+**7. Directory Structure**
+
+```
+/var/earninglens/
+├── assets/                            # EarningLens branding assets
+│   ├── earninglens.png               # Full logo (for header)
+│   ├── el-badge.png                  # Small badge (for corner)
+│   └── fonts/
+│       └── Inter-Bold.ttf
+│
+├── HOOD/
+│   └── Q3-2025/
+│       └── take1/
+│           ├── final.mp4
+│           └── thumbnail.jpg         ← Generated thumbnail
+│
+└── _downloads/
+    └── <video_id>/
+        └── insights.json             # Used to generate thumbnail
+```
+
+#### A/B Testing Thumbnails
+
+**Strategy:** Test different designs to optimize click-through rate
+
+```python
+# Generate multiple thumbnail variants
+
+variants = ['option_a', 'option_b', 'option_c']
+
+for variant in variants:
+    generate_thumbnail(
+        # ... same params ...
+        output_path=f"{output_dir}/thumbnail_{variant}.jpg",
+        layout=variant  # Pass layout option
+    )
+
+# Upload to YouTube, track which gets better CTR
+# After data collected, standardize on winner
+```
+
+**Metrics to Track:**
+- Click-through rate (CTR) on YouTube
+- Watch time correlation
+- Subscriber conversion rate
+
+#### Branding Evolution Process
+
+**When rebranding (changing name/colors):**
+
+1. **Update environment variables**
+   ```bash
+   # .env.local
+   BRAND_NAME="NewBrandName"
+   BRAND_PRIMARY="#FF6B00"  # New color
+   ```
+
+2. **Regenerate thumbnails (optional)**
+   ```bash
+   # Regenerate all thumbnails with new branding
+   python lens/regenerate_thumbnails.py --all
+   ```
+
+3. **No code changes needed** - All references pull from config
+
+**Version Control:**
+```bash
+# Track branding changes in git
+git commit -m "Update brand colors: #007AFF → #FF6B00"
+```
+
+#### YouTube Thumbnail Best Practices
+
+**Technical Requirements:**
+- **Resolution:** 1280x720px (16:9 aspect ratio)
+- **File size:** < 2MB
+- **Format:** JPG or PNG (JPG recommended for smaller file size)
+- **Quality:** High (95% JPEG quality)
+
+**Design Best Practices:**
+- ✅ **Large text** - Readable at 320px wide (mobile)
+- ✅ **High contrast** - Text pops against background
+- ✅ **Minimal text** - Max 5-7 words
+- ✅ **Face/Logo** - Human faces or brand logos drive clicks
+- ✅ **Bright colors** - Stand out in feed
+- ✅ **Consistent style** - Channel brand identity
+- ❌ **Avoid clutter** - Too much text/elements confusing
+- ❌ **Avoid misleading** - Thumbnail must match video content
+
+**EarningLens Specific:**
+- Company logo must be prominent (viewers recognize company)
+- Key metric visible (entices investment community)
+- EarningLens branding consistent (builds channel recognition)
+- Professional aesthetic (targets finance professionals)
+
+### 3. YouTube Integration
 
 **YouTube Data API v3 - Full Integration:**
 
