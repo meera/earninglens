@@ -4,6 +4,7 @@ import {EarningsVideo} from './compositions/EarningsVideo';
 import {EarningsCallVideo} from './compositions/EarningsVideoFull';
 import {PLTR_Q3_2025} from './compositions/PLTR_Q3_2025';
 import {PLTR_Q3_2025_take2} from './compositions/PLTR_Q3_2025-take2';
+import {HOOD_Q3_2025} from './compositions/HOOD_Q3_2025';
 import {
 	SubscribeExample,
 	OutroExample,
@@ -34,6 +35,14 @@ export const RemotionRoot: React.FC = () => {
 				</Folder>
 				<Folder name="Full-Earnings-Calls">
 					<EarningsCallVideo />
+					<Composition
+						id="HOOD-Q3-2025"
+						component={HOOD_Q3_2025}
+						durationInFrames={139254} // ~77 min at 30fps
+						fps={30}
+						width={1920}
+						height={1080}
+					/>
 					<Composition
 						id="PLTR-Q3-2025"
 						component={PLTR_Q3_2025}
@@ -130,6 +139,14 @@ export const RemotionRoot: React.FC = () => {
 					id="FullDemo"
 					component={FullDemo}
 					durationInFrames={360}
+					fps={30}
+					width={1920}
+					height={1080}
+				/>
+				<Composition
+					id="EnhancementsDemo"
+					component={EnhancementsDemo}
+					durationInFrames={1500}
 					fps={30}
 					width={1920}
 					height={1080}

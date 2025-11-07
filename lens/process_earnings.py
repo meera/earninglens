@@ -3,6 +3,15 @@
 Unified earnings video processing orchestrator.
 Can run all steps or individual steps with state tracking.
 
+Pipeline order:
+1. Download - Download video from YouTube
+2. Parse - Extract ticker/quarter from metadata
+3. Transcribe - Run Whisper on original video
+4. Smart Trim - Cut 5s before first speech (keeps title music)
+5. Insights - Extract metrics/highlights with GPT-4o
+6. Render - Create final video with Remotion
+7. Upload - Upload to YouTube
+
 Supports parallel processing of multiple videos:
 - Each video has its own state file: DOWNLOADS_DIR/<video_id>/.state.json
 - File locking prevents race conditions
@@ -13,10 +22,10 @@ Usage:
     python process_earnings.py --url "https://youtube.com/watch?v=..."
 
     # Run single step
-    python process_earnings.py --url "..." --step download
+    python process_earnings.py --url "..." --step transcribe
 
     # Run from specific step onwards
-    python process_earnings.py --url "..." --from transcribe
+    python process_earnings.py --url "..." --from smart-trim
 
     # Parallel processing (multiple terminals/processes)
     python process_earnings.py --url "https://youtube.com/watch?v=video1" &
@@ -294,55 +303,90 @@ class EarningsProcessor:
         })
         self.logger.success("Parse complete")
 
-    def step_remove_silence(self):
-        """Step 3: Remove initial silence"""
-        self.logger.step("Step 3/7: Remove initial silence")
+    def step_smart_trim(self):
+        """Step 4: Smart trim - Cut 5s before first speech"""
+        self.logger.step("Step 4/7: Smart trim video")
 
-        if self.state.get_state("remove_silence") == "completed":
+        if self.state.get_state("smart_trim") == "completed":
             self.logger.info("Already trimmed, skipping")
             return
 
-        # All files in flat _downloads/<video_id>/ directory
+        # Read transcript to find first speech
         video_dir = DOWNLOADS_DIR / self.video_id
+        transcript_file = video_dir / "transcript.json"
+
+        if not transcript_file.exists():
+            raise FileNotFoundError("Transcript not found. Run transcribe step first.")
+
+        with open(transcript_file) as f:
+            transcript = json.load(f)
+
+        # Find first segment with actual speech (not music/silence)
+        first_speech_time = None
+        for segment in transcript.get('segments', []):
+            text = segment.get('text', '').strip()
+            # Skip if text is empty or just music/filler
+            if text and len(text) > 10:  # At least 10 characters
+                first_speech_time = segment.get('start', 0)
+                self.logger.info(f"First speech detected at: {first_speech_time:.2f}s")
+                self.logger.info(f"Text: '{text[:60]}...'")
+                break
+
+        if first_speech_time is None:
+            self.logger.warning("Could not detect first speech, trimming from start")
+            first_speech_time = 0
+
+        # Cut 5 seconds before first speech (for title card + music)
+        cut_start = max(0, first_speech_time - 5)
+
         source_file = video_dir / "source.mp4"
         trimmed_file = video_dir / "source.trimmed.mp4"
 
-        # Call remove_silence function directly
-        result = remove_silence_func(str(source_file), str(trimmed_file))
+        self.logger.info(f"Cutting from {cut_start:.2f}s onwards (5s before first speech)")
 
-        self.state.update_state("remove_silence", "completed", {
+        # Use ffmpeg to cut from calculated start time
+        cmd = [
+            'ffmpeg', '-y',
+            '-ss', str(cut_start),  # Start time
+            '-i', str(source_file),
+            '-c', 'copy',  # Copy without re-encoding (fast)
+            str(trimmed_file)
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"FFmpeg trim failed: {result.stderr}")
+
+        self.state.update_state("smart_trim", "completed", {
             "trimmed_file": str(trimmed_file),
-            "silence_duration": result['silence_duration']
+            "cut_start": cut_start,
+            "first_speech_time": first_speech_time
         })
-        self.logger.success(f"Silence removed ({result['silence_duration']}s)")
+        self.logger.success(f"Video trimmed from {cut_start:.2f}s")
 
     def step_transcribe(self):
-        """Step 4: Transcribe with Whisper"""
-        self.logger.step("Step 4/7: Transcribe with Whisper")
+        """Step 3: Transcribe with Whisper"""
+        self.logger.step("Step 3/7: Transcribe with Whisper")
 
         if self.state.get_state("transcribe") == "completed":
             self.logger.info("Already transcribed, skipping")
             return
 
-        # Transcribe from flat _downloads/<video_id>/ directory
+        # Transcribe from ORIGINAL file (before trimming)
         video_dir = DOWNLOADS_DIR / self.video_id
-        trimmed_file = video_dir / "source.trimmed.mp4"
+        source_file = video_dir / "source.mp4"
 
-        # If trimmed file doesn't exist, use original
-        if not trimmed_file.exists():
-            trimmed_file = video_dir / "source.mp4"
-
-        if not trimmed_file.exists():
-            raise FileNotFoundError("Video file not found. Run previous steps first.")
+        if not source_file.exists():
+            raise FileNotFoundError("Video file not found. Run download step first.")
 
         script = PIPELINE_DIR / "transcribe.py"
         # transcribe.py accepts: filepath, model_name (optional), language (optional)
         # Outputs are saved automatically to same directory as input
-        self._run_python_script(script, [str(trimmed_file), "medium"])
+        self._run_python_script(script, [str(source_file), "medium"])
 
         # Rename transcript files to standard names (flat structure)
         import shutil
-        base_name = trimmed_file.stem  # "source.trimmed" or "source"
+        base_name = source_file.stem  # "source"
 
         # Rename to standard transcript.* names
         source_files = {
@@ -468,8 +512,8 @@ class EarningsProcessor:
         steps = {
             "download": self.step_download,
             "parse": self.step_parse,
-            "remove-silence": self.step_remove_silence,
             "transcribe": self.step_transcribe,
+            "smart-trim": self.step_smart_trim,
             "insights": self.step_insights,
             "render": self.step_render,
             "upload": self.step_upload,
@@ -482,7 +526,7 @@ class EarningsProcessor:
 
     def run_from_step(self, step_name: str):
         """Run from a specific step onwards"""
-        all_steps = ["download", "parse", "remove-silence", "transcribe", "insights", "render", "upload"]
+        all_steps = ["download", "parse", "transcribe", "smart-trim", "insights", "render", "upload"]
 
         try:
             start_idx = all_steps.index(step_name)
@@ -500,8 +544,8 @@ class EarningsProcessor:
 
         self.step_download()
         self.step_parse()
-        self.step_remove_silence()
         self.step_transcribe()
+        self.step_smart_trim()
         self.step_insights()
         self.step_render()
         self.step_upload()
@@ -538,7 +582,7 @@ def main():
     parser.add_argument("--url", required=True, help="YouTube URL")
     parser.add_argument("--ticker", help="Company ticker symbol (e.g., HOOD, PLTR)")
     parser.add_argument("--quarter", help="Quarter (e.g., Q3-2025)")
-    parser.add_argument("--step", help="Run single step (download, parse, remove-silence, transcribe, insights, render, upload)")
+    parser.add_argument("--step", help="Run single step (download, parse, transcribe, smart-trim, insights, render, upload)")
     parser.add_argument("--from", dest="from_step", help="Run from specific step onwards")
 
     args = parser.parse_args()
