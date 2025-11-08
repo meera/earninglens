@@ -141,7 +141,58 @@ exit
 
 ---
 
-### **Step 4: Upload to YouTube** (Mac or Sushi)
+### **Step 4: Preview Before Upload** (Mac - 5 min)
+
+**IMPORTANT:** Always preview before uploading to YouTube to catch timing errors!
+
+```bash
+# Ensure media server is running
+npx serve /var/earninglens --cors -p 8080
+
+# Open preview in browser
+# http://192.168.1.101:8080/preview-chapters.html
+```
+
+**What to Check:**
+
+1. **Video Playback**
+   - Watch full video or spot-check key moments
+   - Verify metric overlays appear at correct times
+   - Check speaker labels show at right moments
+
+2. **Chapter Markers**
+   - Click each timestamp in description
+   - Verify video jumps to correct moment
+   - Ensure chapter titles are descriptive
+
+3. **Thumbnails**
+   - Review all 4 thumbnail variations
+   - Click to download your preferred one
+   - Verify text is readable on background
+
+4. **YouTube Description**
+   - Copy description text
+   - Verify formatting looks good
+   - Check hashtags are appropriate
+
+**If Issues Found:**
+
+```bash
+# Fix composition timestamps
+# Edit: studio/src/compositions/HOOD_Q3_2025.tsx
+
+# Re-render (on sushi)
+ssh sushi
+cd ~/earninglens/studio
+npm run render -- HOOD-Q3-2025
+
+# Preview again
+# http://192.168.1.101:8080/preview-chapters.html
+```
+
+---
+
+### **Step 5: Upload to YouTube** (Mac or Sushi)
 
 ```bash
 # On Mac (files already accessible in shared directory)

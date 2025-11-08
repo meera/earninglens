@@ -236,6 +236,120 @@ These are the ONLY sources we trust absolutely. Everything else is supplementary
 - **Format:** H.264 MP4, 1080p, 30fps
 - **Audio:** Synced narration + background audio
 
+### Media Server (Critical for Remotion)
+
+**Problem:** Remotion cannot use absolute file paths (not portable). Videos in `/var/earninglens/` need to be served via HTTP.
+
+**Solution:** Serve `/var/earninglens` via HTTP with CORS enabled.
+
+**Setup:**
+```bash
+# Terminal 1: Start media server (keep running)
+npx serve /var/earninglens --cors -p 8080
+
+# Terminal 2: Run Remotion Studio
+cd ~/earninglens/studio
+npm run start
+```
+
+**Environment Variable:**
+```bash
+# .env
+MEDIA_SERVER_URL="http://192.168.1.101:8080"
+```
+
+**In Compositions:**
+```typescript
+// Compositions read from environment variable
+const mediaServerUrl = process.env.MEDIA_SERVER_URL || 'http://localhost:8080';
+const videoPath = `${mediaServerUrl}/HOOD/Q3-2025/input/source.trimmed.mp4`;
+```
+
+**Benefits:**
+- ✅ No copying files to `public/` directory
+- ✅ Direct access to `/var/earninglens` videos
+- ✅ Configurable server URL via `.env`
+- ✅ Works for both preview and rendering
+
+**Important:** The media server must be running for Remotion Studio and rendering to work!
+
+### YouTube Preview System
+
+**Purpose:** Preview video, thumbnails, chapter markers, and description BEFORE uploading to YouTube.
+
+**Preview Tool:** `preview-chapters.html` - A YouTube-like interface to verify all content.
+
+**How to Preview:**
+
+1. **Ensure media server is running:**
+   ```bash
+   npx serve /var/earninglens --cors -p 8080
+   ```
+
+2. **Access preview page in browser:**
+   ```
+   http://192.168.1.101:8080/preview-chapters.html
+   ```
+
+**What You Can Preview:**
+
+- ✅ **Video Player** - Full rendered video with controls
+- ✅ **Thumbnails** - 4 generated thumbnails (click to download)
+- ✅ **Chapter Markers** - Clickable timestamps in description (just like YouTube)
+- ✅ **YouTube Description** - Ready to copy/paste into YouTube
+- ✅ **Hashtags** - Pre-formatted hashtags for YouTube
+
+**Configuration:**
+
+Edit the config section in `preview-chapters.html`:
+```javascript
+const CONFIG = {
+  ticker: 'HOOD',
+  quarter: 'Q3-2025',
+  videoType: 'take1',        // or 'take2', 'take3' for different renders
+  videoFilename: 'final.mp4', // Actual rendered filename
+  serverUrl: 'http://192.168.1.101:8080'
+};
+```
+
+**Workflow:**
+
+```bash
+# 1. Render video
+cd ~/earninglens/studio
+npx remotion render HOOD-Q3-2025 /var/earninglens/HOOD/Q3-2025/take1/final.mp4
+
+# 2. Generate thumbnails
+cd ~/earninglens
+source .venv/bin/activate
+python lens/smart_thumbnail_generator.py \
+  --data /var/earninglens/HOOD/Q3-2025/insights.json \
+  --output /var/earninglens/HOOD/Q3-2025/
+
+# 3. Preview (ensure media server is running)
+# Open in browser: http://192.168.1.101:8080/preview-chapters.html
+
+# 4. Verify:
+#    - Watch video to check overlays/timing
+#    - Click chapter markers to test navigation
+#    - Download preferred thumbnail
+#    - Copy description for YouTube upload
+
+# 5. Upload to YouTube (only after preview looks good)
+python lens/scripts/upload_youtube.py \
+  --video /var/earninglens/HOOD/Q3-2025/take1/final.mp4 \
+  --thumbnail /var/earninglens/HOOD/Q3-2025/thumbnail_1.jpg \
+  --metadata /var/earninglens/HOOD/Q3-2025/insights.json
+```
+
+**Benefits:**
+
+- ✅ Catch timing errors before uploading
+- ✅ Test chapter navigation like YouTube
+- ✅ Choose best thumbnail from 4 variations
+- ✅ Verify description formatting
+- ✅ No need to upload/delete test videos
+
 ### APIs
 - **YouTube Data API v3:**
   - Video upload (automated)
@@ -725,14 +839,32 @@ npm run type-check
 
 ### Video Generation
 ```bash
-# Render single video locally
-npm run render:video -- --company=AAPL --quarter=Q4 --year=2024
+# Start media server (required for Remotion)
+npx serve /var/earninglens --cors -p 8080
 
-# Batch render on GPU machine
-./scripts/batch-render.sh --count=10
+# Open Remotion Studio (in another terminal)
+cd ~/earninglens/studio
+npm run start
+# Access at: http://192.168.1.101:8082/
+
+# Render video
+cd ~/earninglens/studio
+npx remotion render src/index.ts HOOD-Q3-2025 /var/earninglens/HOOD/Q3-2025/take1/take1.mp4
+
+# Generate smart thumbnails (4 variations with different text effects)
+python lens/smart_thumbnail_generator.py \
+  /var/earninglens/HOOD/Q3-2025/input/source.trimmed.mp4 \
+  /var/earninglens/HOOD/Q3-2025/insights.json \
+  /var/earninglens/HOOD/Q3-2025/
+
+# Preview chapters before YouTube upload
+# Open scripts/preview-chapters.html in browser
+# Requires media server running: npx serve /var/earninglens --cors -p 8080
 
 # Upload to YouTube
-npm run youtube:upload -- --video-id=abc123
+python lens/scripts/upload_youtube.py \
+  /var/earninglens/HOOD/Q3-2025/take1/take1.mp4 \
+  /var/earninglens/HOOD/Q3-2025/insights.json
 ```
 
 ### Deployment
