@@ -1,4 +1,4 @@
-# EarningLens
+# EarningsHawk
 
 **Transform earnings calls into visually-enhanced YouTube videos.**
 

@@ -2,10 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project: EarningLens
+## Project: EarningsHawk
 
 ### Overview
-EarningLens transforms earnings call audio into visually-enhanced YouTube videos with an interactive SaaS web platform.
+EarningsHawk transforms earnings call audio into visually-enhanced YouTube videos with an interactive SaaS web platform.
 
 ---
 
@@ -475,7 +475,7 @@ earninglens/
 │   ├── package.json
 │   └── remotion.config.ts
 │
-├── web/                           # Next.js public website (earninglens.com)
+├── web/                           # Next.js public website (earningshawk.com)
 │   ├── app/                       # Next.js App Router
 │   │   ├── (auth)/                # Auth pages
 │   │   ├── (public)/              # Landing, video pages
@@ -1317,7 +1317,7 @@ CREATE INDEX idx_video_engagement_video_id ON video_engagement(video_id);
 ## Admin Dashboard Requirements
 
 ### Primary Monitor (NOT Email)
-**URL:** `earninglens.com/admin`
+**URL:** `earningshawk.com/admin`
 
 **Design Principles:**
 - **Mobile-first:** Optimized for phone viewing
@@ -1439,7 +1439,7 @@ ${company} (${ticker}) ${quarter} ${year} earnings call with visual charts, tran
 - EPS: [Auto-filled]
 - Guidance: [Auto-filled]
 
-🔗 Full interactive analysis: https://earninglens.com/${ticker.toLowerCase()}/${quarter.toLowerCase()}-${year}
+🔗 Full interactive analysis: https://earningshawk.com/${ticker.toLowerCase()}/${quarter.toLowerCase()}-${year}
 
 Subscribe for more earnings call visualizations!
 
@@ -1761,7 +1761,7 @@ function VideoPlayer({videoId, user}) {
 - EPS: $X.XX (±X%)
 - Guidance: [Summary]
 
-🔗 Full interactive analysis: https://earninglens.com/[ticker]/[quarter]-[year]
+🔗 Full interactive analysis: https://earningshawk.com/[ticker]/[quarter]-[year]
 
 Timestamps:
 0:00 Intro
@@ -2058,7 +2058,7 @@ export async function POST(req: Request) {
 
 **First Visit (Not Logged In):**
 ```
-1. User lands on earninglens.com
+1. User lands on earningshawk.com
 2. Google One Tap popup appears in corner
    ┌──────────────────────────────┐
    │ Sign in with Google          │
@@ -2074,7 +2074,7 @@ export async function POST(req: Request) {
 
 **Subsequent Visits:**
 ```
-1. User returns to earninglens.com
+1. User returns to earningshawk.com
 2. If auto_select: true, automatically signed in
 3. No popup shown (seamless)
 ```

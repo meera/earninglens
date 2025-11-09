@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter Preview - EarningLens</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #0f0f0f;
+      color: #fff;
+    }
+    h1 { margin-bottom: 5px; }
+    .subtitle { color: #aaa; margin-bottom: 30px; }
+
+    .container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+
+    video {
+      width: 100%;
+      background: #000;
+      border-radius: 8px;
+    }
+
+    .chapters {
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 20px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .chapter {
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #2a2a2a;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .chapter:hover {
+      background: #3a3a3a;
+    }
+
+    .chapter.active {
+      background: #00c805;
+      color: #000;
+    }
+
+    .chapter-time {
+      font-weight: bold;
+      font-size: 14px;
+      color: #00c805;
+    }
+
+    .chapter.active .chapter-time {
+      color: #000;
+    }
+
+    .chapter-title {
+      font-weight: 600;
+      margin: 5px 0;
+    }
+
+    .chapter-desc {
+      font-size: 13px;
+      color: #aaa;
+      line-height: 1.4;
+    }
+
+    .chapter.active .chapter-desc {
+      color: #333;
+    }
+
+    .description {
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      grid-column: 1 / -1;
+    }
+
+    .description h2 {
+      margin-top: 0;
+      color: #00c805;
+    }
+
+    .description pre {
+      background: #0a0a0a;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="title">Loading...</h1>
+  <div class="subtitle" id="subtitle">Earnings Call Preview</div>
+
+  <div class="container">
+    <div>
+      <video id="video" controls>
+        <source id="videoSource" src="" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+    <div class="chapters" id="chaptersContainer">
+      <h3>Chapters</h3>
+      <div id="chaptersList"></div>
+    </div>
+  </div>
+
+  <div class="description">
+    <h2>YouTube Description (Copy/Paste)</h2>
+    <pre id="descriptionText"></pre>
+  </div>
+
+  <script>
+    // CONFIGURATION - Edit these values
+    const CONFIG = {
+      ticker: 'HOOD',
+      quarter: 'Q3-2025',
+      // Use rendered video (change to 'take1', 'take2', etc. as needed)
+      videoType: 'take1', // or 'input/source.trimmed' for original
+      videoFilename: 'final.mp4', // Actual rendered filename
+      serverUrl: 'http://192.168.1.101:8080'
+    };
+
+    const video = document.getElementById('video');
+    const videoSource = document.getElementById('videoSource');
+
+    // Load rendered video with enhancements
+    const httpVideoPath = `${CONFIG.serverUrl}/${CONFIG.ticker}/${CONFIG.quarter}/${CONFIG.videoType}/${CONFIG.videoFilename}`;
+    videoSource.src = httpVideoPath;
+    video.load();
+
+    console.log('Loading video from:', httpVideoPath);
+
+    // Load insights.json
+    fetch(`${CONFIG.serverUrl}/${CONFIG.ticker}/${CONFIG.quarter}/insights.json`)
+      .then(res => res.json())
+      .then(data => {
+        const metadata = data.metadata || {};
+        const chapters = data.chapters || [];
+
+        // Update title
+        document.getElementById('title').textContent =
+          `${metadata.company} ${metadata.quarter} ${metadata.year} Earnings Call`;
+
+        // Render chapters
+        const chaptersList = document.getElementById('chaptersList');
+        chapters.forEach((chapter, index) => {
+          const div = document.createElement('div');
+          div.className = 'chapter';
+          div.innerHTML = `
+            <div class="chapter-time">${formatTime(chapter.timestamp)}</div>
+            <div class="chapter-title">${chapter.title}</div>
+            <div class="chapter-desc">${chapter.description || ''}</div>
+          `;
+          div.onclick = () => {
+            video.currentTime = chapter.timestamp;
+            video.play();
+          };
+          chaptersList.appendChild(div);
+        });
+
+        // Generate YouTube description
+        let description = `${metadata.summary || ''}\n\n`;
+        description += `📖 Chapters:\n`;
+        chapters.forEach(ch => {
+          description += `${formatTime(ch.timestamp)} - ${ch.title}\n`;
+        });
+        description += `\n📊 Full interactive analysis: https://earninglens.com/${metadata.ticker || 'unknown'}/${metadata.quarter || 'q4'}-${metadata.year || 2024}\n`;
+        description += `\nSubscribe for more earnings call visualizations!\n\n`;
+
+        // Add hashtags
+        if (data.youtube && data.youtube.hashtags) {
+          description += `${data.youtube.hashtags.map(h => '#' + h).join(' ')}`;
+        }
+
+        document.getElementById('descriptionText').textContent = description;
+
+        // Highlight active chapter
+        video.addEventListener('timeupdate', () => {
+          const currentTime = video.currentTime;
+          const activeChapter = chapters.findIndex((ch, i) => {
+            const nextCh = chapters[i + 1];
+            return currentTime >= ch.timestamp && (!nextCh || currentTime < nextCh.timestamp);
+          });
+
+          document.querySelectorAll('.chapter').forEach((el, i) => {
+            el.classList.toggle('active', i === activeChapter);
+          });
+        });
+      })
+      .catch(err => {
+        console.error('Error loading insights:', err);
+        alert('Error loading insights.json. Make sure HTTP server is running:\n\ncd /var/earninglens && python3 -m http.server 8080');
+      });
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+  </script>
+</body>
+</html>

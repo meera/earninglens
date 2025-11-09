@@ -1,7 +1,7 @@
 {
-  "name": "@earninglens/studio",
+  "name": "@earningshawk/studio",
   "version": "0.1.0",
-  "description": "Video production with Remotion for EarningLens earnings videos",
+  "description": "Video production with Remotion for EarningsHawk earnings videos",
   "private": true,
   "scripts": {
     "start": "remotion studio",

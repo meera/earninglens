@@ -1,4 +1,25 @@
-# EarningLens TODO
+# EarningsHawk TODO
+
+## High Priority
+
+### Thumbnail Validation Agent
+**Need**: Automated thumbnail validation to ensure quality before upload
+**Requirements**:
+- Check text readability (sufficient contrast with background)
+- Verify EarningsHawk branding is visible
+- Verify company branding (logo/colors) is prominent
+- Ensure thumbnail is visually attractive and engaging
+- Flag thumbnails that don't meet quality standards
+
+**Implementation Ideas**:
+- Use image analysis (PIL/OpenCV) to check contrast ratios
+- OCR to verify text is readable
+- Brand color detection (check for company brand colors)
+- Visual quality metrics (sharpness, composition)
+
+**Priority**: High (quality control for YouTube thumbnails)
+
+---
 
 ## Critical Issues
 
