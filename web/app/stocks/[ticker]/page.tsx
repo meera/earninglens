@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${company.symbol} - ${company.name} | Markey HawkEye`,
-    description: `Watch earnings call videos for ${company.name} (${company.symbol}). Hear actual executive voices with synchronized financial data. ${company.sector ? `Sector: ${company.sector}.` : ''} ${company.industry ? `Industry: ${company.industry}.` : ''}`,
+    description: `Watch earnings call videos for ${company.name} (${company.symbol}). Hear actual executive voices with synchronized financial data. ${company.metadata.sector ? `Sector: ${company.metadata.sector}.` : ''} ${company.metadata.industry ? `Industry: ${company.metadata.industry}.` : ''}`,
     openGraph: {
       title: `${company.symbol} - ${company.name}`,
       description: `Watch earnings call videos for ${company.name}. Hear what transcripts can't show.`,
@@ -65,8 +65,8 @@ export default async function CompanyPage({ params }: PageProps) {
   }
 
   // Get related companies in same sector
-  const relatedCompanies = company.sector
-    ? (await getCompaniesBySector(company.sector, 8)).filter((c) => c.id !== company.id)
+  const relatedCompanies = company.metadata.sector
+    ? (await getCompaniesBySector(company.metadata.sector, 8)).filter((c) => c.id !== company.id)
     : [];
 
   return (
@@ -96,13 +96,13 @@ export default async function CompanyPage({ params }: PageProps) {
             All Companies
           </Link>
           <span>→</span>
-          {company.sector && (
+          {company.metadata.sector && (
             <>
               <Link
-                href={`/?sector=${encodeURIComponent(company.sector)}`}
+                href={`/?sector=${encodeURIComponent(company.metadata.sector)}`}
                 className="hover:text-primary transition-colors"
               >
-                {company.sector}
+                {company.metadata.sector}
               </Link>
               <span>→</span>
             </>
@@ -117,14 +117,14 @@ export default async function CompanyPage({ params }: PageProps) {
               <h1 className="text-4xl font-bold text-text-primary mb-2">{company.name}</h1>
               <div className="flex items-center gap-4 text-text-tertiary">
                 <span className="text-primary font-bold text-xl">{company.symbol}</span>
-                {company.sector && <span>• {company.sector}</span>}
-                {company.country && <span>• {company.country}</span>}
+                {company.metadata.sector && <span>• {company.metadata.sector}</span>}
+                {company.metadata.exchange && <span>• {company.metadata.exchange}</span>}
               </div>
             </div>
-            {company.market_cap && (
+            {company.metadata.market_cap && (
               <div className="text-right">
                 <div className="text-sm text-text-tertiary mb-1">Market Cap</div>
-                <div className="text-2xl font-bold text-primary">{formatMarketCap(company.market_cap)}</div>
+                <div className="text-2xl font-bold text-primary">{formatMarketCap(company.metadata.market_cap)}</div>
               </div>
             )}
           </div>
@@ -133,43 +133,17 @@ export default async function CompanyPage({ params }: PageProps) {
           <div className="grid md:grid-cols-3 gap-6 pt-6 border-t border-border">
             <div>
               <div className="text-sm text-text-tertiary mb-1">Industry</div>
-              <div className="text-text-secondary">{company.industry || 'N/A'}</div>
+              <div className="text-text-secondary">{company.metadata.industry || 'N/A'}</div>
             </div>
             <div>
               <div className="text-sm text-text-tertiary mb-1">IPO Year</div>
-              <div className="text-text-secondary">{company.ipo_year || 'N/A'}</div>
+              <div className="text-text-secondary">{company.metadata.ipo_year || 'N/A'}</div>
             </div>
             <div>
-              <div className="text-sm text-text-tertiary mb-1">Volume</div>
-              <div className="text-text-secondary">{formatNumber(company.volume)}</div>
+              <div className="text-sm text-text-tertiary mb-1">Country</div>
+              <div className="text-text-secondary">{company.metadata.country || 'N/A'}</div>
             </div>
           </div>
-
-          {/* Price Info */}
-          {company.last_sale && (
-            <div className="grid md:grid-cols-3 gap-6 pt-6 border-t border-border mt-6">
-              <div>
-                <div className="text-sm text-text-tertiary mb-1">Last Sale</div>
-                <div className="text-text-secondary font-bold">${Number(company.last_sale).toFixed(2)}</div>
-              </div>
-              <div>
-                <div className="text-sm text-text-tertiary mb-1">Net Change</div>
-                <div
-                  className={`font-bold ${company.net_change && Number(company.net_change) >= 0 ? 'text-green-500' : 'text-red-500'}`}
-                >
-                  {company.net_change !== null ? `$${Number(company.net_change).toFixed(2)}` : 'N/A'}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-text-tertiary mb-1">% Change</div>
-                <div
-                  className={`font-bold ${company.net_change && Number(company.net_change) >= 0 ? 'text-green-500' : 'text-red-500'}`}
-                >
-                  {formatPercentage(company.pct_change)}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Earnings Calls Section */}
@@ -197,22 +171,22 @@ export default async function CompanyPage({ params }: PageProps) {
         {relatedCompanies.length > 0 && (
           <div>
             <h2 className="text-2xl font-bold text-text-primary mb-6">
-              More Companies in {company.sector}
+              More Companies in {company.metadata.sector}
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {relatedCompanies.map((related) => (
                 <Link
                   key={related.id}
-                  href={`/stocks/${related.symbol.toLowerCase()}`}
+                  href={`/companies/${related.slug}`}
                   className="group bg-background-muted/40 border border-border rounded-xl p-4 hover:bg-background-muted/60 hover:border-border-accent hover:shadow-lg hover:shadow-accent/10 transition-all"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="text-primary font-bold text-lg group-hover:text-primary-light transition-colors">
                       {related.symbol}
                     </div>
-                    {related.market_cap && (
+                    {related.metadata.market_cap && (
                       <div className="text-xs text-text-tertiary bg-background/50 px-2 py-1 rounded">
-                        {formatMarketCap(related.market_cap)}
+                        {formatMarketCap(related.metadata.market_cap)}
                       </div>
                     )}
                   </div>

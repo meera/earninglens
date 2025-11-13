@@ -34,7 +34,7 @@ async function TopCompanies() {
       {topCompanies.map((company) => (
         <Link
           key={company.id}
-          href={`/stocks/${company.symbol.toLowerCase()}`}
+          href={`/companies/${company.slug}`}
           className="group bg-background-muted/40 border border-border rounded-xl p-4 hover:bg-background-muted/60 hover:border-border-accent hover:shadow-lg hover:shadow-accent/10 transition-all"
         >
           <div className="flex items-start justify-between mb-2">
@@ -42,10 +42,10 @@ async function TopCompanies() {
               <div className="text-primary font-bold text-lg group-hover:text-primary-light transition-colors">
                 {company.symbol}
               </div>
-              <div className="text-text-tertiary text-xs mt-1">{company.sector || 'N/A'}</div>
+              <div className="text-text-tertiary text-xs mt-1">{company.metadata.sector || 'N/A'}</div>
             </div>
             <div className="text-xs text-text-tertiary bg-background/50 px-2 py-1 rounded">
-              {formatMarketCap(company.market_cap)}
+              {formatMarketCap(company.metadata.market_cap || null)}
             </div>
           </div>
           <div className="text-text-secondary text-sm line-clamp-2">{company.name}</div>
@@ -181,23 +181,23 @@ export default async function StocksPage({
             {companies.map((company) => (
               <Link
                 key={company.id}
-                href={`/stocks/${company.symbol.toLowerCase()}`}
+                href={`/companies/${company.slug}`}
                 className="group bg-background-muted/40 border border-border rounded-xl p-4 hover:bg-background-muted/60 hover:border-border-accent hover:shadow-lg hover:shadow-accent/10 transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-primary font-bold text-lg group-hover:text-primary-light transition-colors">
                     {company.symbol}
                   </div>
-                  {company.market_cap && (
+                  {company.metadata.market_cap && (
                     <div className="text-xs text-text-tertiary bg-background/50 px-2 py-1 rounded">
-                      {formatMarketCap(company.market_cap)}
+                      {formatMarketCap(company.metadata.market_cap)}
                     </div>
                   )}
                 </div>
                 <div className="text-text-secondary text-sm mb-2 line-clamp-2">{company.name}</div>
                 <div className="flex items-center gap-2 text-xs text-text-tertiary">
-                  {company.sector && <span>{company.sector}</span>}
-                  {company.country && <span>• {company.country}</span>}
+                  {company.metadata.sector && <span>{company.metadata.sector}</span>}
+                  {company.metadata.country && <span>• {company.metadata.country}</span>}
                 </div>
               </Link>
             ))}
