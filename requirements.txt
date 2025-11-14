@@ -6,6 +6,7 @@ python-dotenv==1.0.1
 requests
 PyYAML
 psycopg2-binary  # PostgreSQL database adapter
+rapidfuzz>=3.0.0  # Fast fuzzy string matching for company names
 
 # Image processing (for thumbnails)
 Pillow>=10.0.0

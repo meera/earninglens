@@ -3,7 +3,8 @@ import { relations } from 'drizzle-orm';
 import { z } from 'zod';
 
 // Define custom schema for MarketHawk (separate from VideotoBe's app_videotobe schema)
-export const markethawkSchema = pgSchema('markethawk');
+// Note: Schema name is 'markethawkeye' in the database
+export const markethawkSchema = pgSchema('markethawkeye');
 
 // ============================================
 // JSONB SCHEMAS (Type Safety with Zod)
@@ -294,6 +295,58 @@ export const newsletterSubscribers = markethawkSchema.table(
 );
 
 // ============================================
+// EARNINGS CALLS (Batch Processing Pipeline)
+// ============================================
+
+/**
+ * Earnings Calls Table - Batch processed audio files
+ *
+ * This table is populated by the batch processing pipeline (lens/batch_processor.py)
+ * after successfully processing YouTube earnings call videos.
+ *
+ * Database: PostgreSQL at 192.168.86.250:54322
+ * Schema: markethawkeye
+ * Created: Manually via SQL (drizzle migration failed due to version mismatch)
+ *
+ * Metadata JSONB fields (examples):
+ * - company_name: string (e.g., "NVIDIA CORP")
+ * - company_slug: string (e.g., "nvidia")
+ * - is_earnings_call: boolean
+ * - speakers: array of speaker objects
+ * - financial_metrics: array of metric objects
+ * - highlights: array of highlight objects
+ * - job_id: string (e.g., "xw6oCFYNz8c_a328")
+ * - batch_name: string (e.g., "nov-13-2025-test")
+ * - pipeline_version: string (e.g., "v1", "audio-only")
+ * - r2_path: string (full R2 path to audio file)
+ * - public_url: string (public R2 URL)
+ * - source_youtube_url: string
+ * - source_youtube_title: string
+ * - duration_seconds: number
+ * - file_size_mb: number
+ */
+export const earningsCalls = markethawkSchema.table(
+  'earnings_calls',
+  {
+    id: varchar('id', { length: 255 }).primaryKey().$defaultFn(() => `ec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`),
+    cikStr: varchar('cik_str', { length: 20 }).notNull(), // SEC Central Index Key
+    symbol: varchar('symbol', { length: 10 }).notNull(), // Stock ticker (e.g., NVDA)
+    quarter: varchar('quarter', { length: 10 }).notNull(), // Q1, Q2, Q3, Q4
+    year: integer('year').notNull(), // Fiscal year
+    audioUrl: varchar('audio_url', { length: 512 }), // Public R2 URL to audio file
+    youtubeId: varchar('youtube_id', { length: 50 }), // Source YouTube video ID
+    metadata: jsonb('metadata').$type<Record<string, any>>().default({}), // Flexible metadata from pipeline
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    symbolIdx: index('idx_earnings_calls_symbol').on(table.symbol),
+    quarterYearIdx: index('idx_earnings_calls_quarter_year').on(table.quarter, table.year),
+    uniqueQuarter: index('idx_earnings_calls_unique').on(table.cikStr, table.quarter, table.year),
+  })
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 
@@ -375,3 +428,6 @@ export type NewClickThrough = typeof clickThroughs.$inferInsert;
 
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 export type NewNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;
+
+export type EarningsCall = typeof earningsCalls.$inferSelect;
+export type NewEarningsCall = typeof earningsCalls.$inferInsert;

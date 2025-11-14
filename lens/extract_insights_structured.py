@@ -48,6 +48,14 @@ class Chapter(BaseModel):
 
 class EarningsInsights(BaseModel):
     """Complete earnings call insights"""
+    # Company detection and validation
+    is_earnings_call: bool = Field(description="True if this is an actual earnings call, False for product launches, interviews, etc.")
+    company_name: str = Field(description="Detected company name from transcript and metadata")
+    company_ticker: Optional[str] = Field(default=None, description="Detected stock ticker symbol (e.g., NVDA, AAPL)")
+    quarter: str = Field(description="Quarter (e.g., Q3, Q4)")
+    year: int = Field(description="Year (e.g., 2025)")
+
+    # Content insights
     speakers: List[Speaker] = Field(description="All speakers identified in the call")
     financial_metrics: List[FinancialMetric] = Field(description="Key financial metrics mentioned")
     highlights: List[Highlight] = Field(description="5-10 key highlights from the call")
@@ -55,6 +63,138 @@ class EarningsInsights(BaseModel):
     summary: str = Field(description="2-3 paragraph narrative summary of the call")
     youtube_title: str = Field(description="Optimized YouTube video title")
     youtube_description: str = Field(description="YouTube description with timestamps")
+
+
+def extract_earnings_insights_auto(
+    transcript_file: Path,
+    youtube_metadata: Optional[Dict] = None,
+    output_file: Optional[Path] = None
+) -> EarningsInsights:
+    """
+    Extract structured insights with auto-detection of company/quarter/year
+
+    Args:
+        transcript_file: Path to transcript.json (from WhisperX)
+        youtube_metadata: Optional YouTube metadata (title, description, channel)
+        output_file: Optional path to save raw OpenAI response
+
+    Returns:
+        EarningsInsights object with auto-detected company information
+    """
+    # Load transcript
+    with open(transcript_file, 'r', encoding='utf-8') as f:
+        transcript_data = json.load(f)
+
+    # Format transcript for analysis
+    formatted_transcript = format_transcript_for_analysis(transcript_data)
+
+    # Build context from YouTube metadata
+    metadata_context = ""
+    if youtube_metadata:
+        metadata_context = f"""
+YOUTUBE METADATA:
+- Title: {youtube_metadata.get('title', 'N/A')}
+- Description: {youtube_metadata.get('description', 'N/A')[:500]}...
+- Channel: {youtube_metadata.get('channel', 'N/A')}
+"""
+
+    # System prompt
+    system_prompt = """You are an expert financial analyst specializing in earnings calls.
+Your role is to:
+1. VALIDATE if this is an actual earnings call (not a product launch, interview, or other content)
+2. DETECT the company name, ticker symbol, quarter, and year from the content
+3. Extract key financial metrics, identify speakers, and create structured insights
+
+Be conservative with validation - only mark as earnings call if there are clear financial results discussed."""
+
+    # User prompt with auto-detection
+    user_prompt = f"""
+Analyze this audio transcript and determine if it is an earnings call.
+
+{metadata_context}
+
+VALIDATION (CRITICAL):
+- Is this an actual earnings call with quarterly financial results?
+- Or is it a product launch, interview, conference presentation, or other content?
+- Set is_earnings_call = True ONLY if financial results are discussed
+
+COMPANY DETECTION:
+- Extract company name from transcript or metadata
+- Extract stock ticker if mentioned (e.g., NVDA, AAPL, TSLA)
+- Determine quarter (Q1, Q2, Q3, Q4) and year (2024, 2025)
+
+SPEAKER IDENTIFICATION:
+- Map SPEAKER_00, SPEAKER_01, etc. to actual names
+- Identify roles (CEO, CFO, IR Head, Analyst from [Firm])
+- Use 'Unknown' only if name truly can't be identified from context
+
+FINANCIAL METRICS:
+- Extract key metrics: Revenue, EPS, Operating Income, Free Cash Flow, Margins
+- Include exact values and % changes vs prior period
+- Note timestamp when mentioned
+
+HIGHLIGHTS:
+- 5-10 most important moments from the call
+- Financial results, guidance changes, product announcements, strategic shifts
+- Include speaker attribution and timestamps
+
+CHAPTERS:
+- Create clear chapter markers:
+  - Opening Remarks (usually ~0:00)
+  - Financial Results (usually after intro)
+  - Business Update / Product News
+  - Guidance / Outlook
+  - Q&A Session
+- Use actual timestamps from transcript
+
+SUMMARY:
+- 2-3 paragraph narrative covering:
+  - Financial performance highlights
+  - Strategic announcements
+  - Forward guidance
+  - Key Q&A themes
+
+YOUTUBE METADATA:
+- Title: Optimized for search (include company, ticker, quarter, year)
+- Description: Summary + timestamp links to chapters
+
+Transcript:
+{formatted_transcript}
+"""
+
+    # Call OpenAI with structured output
+    client = OpenAI()
+
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o-2024-08-06",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        response_format=EarningsInsights,
+    )
+
+    insights = completion.choices[0].message.parsed
+
+    # Save raw OpenAI response if output file specified
+    if output_file:
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_file, 'w', encoding='utf-8') as f:
+            # Include usage stats and metadata
+            raw_output = {
+                "insights": insights.model_dump(),
+                "youtube_metadata": youtube_metadata,
+                "usage": {
+                    "prompt_tokens": completion.usage.prompt_tokens,
+                    "completion_tokens": completion.usage.completion_tokens,
+                    "total_tokens": completion.usage.total_tokens
+                },
+                "model": completion.model,
+                "created_at": completion.created
+            }
+            json.dump(raw_output, f, indent=2, ensure_ascii=False)
+
+    return insights
 
 
 def extract_earnings_insights(
@@ -96,9 +236,21 @@ Focus on:
 - Creating clear chapter markers for major sections (Opening Remarks, Financial Results, Guidance, Q&A)
 """
 
+    # Parse quarter and year from quarter string (e.g., "Q3-2025")
+    quarter_parts = quarter.split('-')
+    quarter_only = quarter_parts[0] if len(quarter_parts) > 0 else quarter
+    year_only = int(quarter_parts[1]) if len(quarter_parts) > 1 else 2025
+
     # User prompt
     user_prompt = f"""
 Analyze this {company_name} ({ticker}) {quarter} earnings call transcript.
+
+COMPANY INFORMATION:
+- Company Name: {company_name}
+- Ticker: {ticker}
+- Quarter: {quarter_only}
+- Year: {year_only}
+- This is a confirmed earnings call (is_earnings_call = True)
 
 SPEAKER IDENTIFICATION:
 - Map SPEAKER_00, SPEAKER_01, etc. to actual names
