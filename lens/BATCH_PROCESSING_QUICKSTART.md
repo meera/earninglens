@@ -60,8 +60,11 @@ This creates:
 /var/markethawk/batch_runs/nov-13-2025-test/
 ├── pipeline.yaml
 └── batch_001/
-    ├── batch.yaml
+    ├── batch.yaml      # Contains lightweight job references (youtube_id, job_id)
     └── batch.log
+
+# Note: job.yaml files are created on-demand during processing
+# No /var/markethawk/jobs/ directories exist yet
 ```
 
 ### Step 3: Process the batch
@@ -83,20 +86,33 @@ tail -f /var/markethawk/batch_runs/nov-13-2025-test/batch_001/batch.log
 
 After completion, check:
 
-1. **Job directory:**
+1. **Job directory (created during processing):**
    ```bash
-   ls -la /var/markethawk/youtube/{job_id}/
+   ls -la /var/markethawk/jobs/
+   # Example: dQw4w9WgXcQ_a3b9/
+
+   ls -la /var/markethawk/jobs/{job_id}/
+   # Will contain:
+   # - job.yaml (created on-demand)
+   # - source/ (downloaded video)
+   # - transcripts/ (WhisperX output)
+   # - audio.mp3 (extracted audio)
    ```
 
-2. **Batch status:**
+2. **Job YAML (created during processing):**
+   ```bash
+   cat /var/markethawk/jobs/{job_id}/job.yaml
+   ```
+
+3. **Batch status:**
    ```bash
    cat /var/markethawk/batch_runs/nov-13-2025-test/batch_001/batch.yaml
    ```
 
-3. **R2 upload:**
+4. **R2 upload:**
    ```bash
-   # List by company (R2 structure: {company}/{quarter}/{pipeline}/)
-   rclone ls r2-markethawkeye:markeyhawkeye/nvidia/Q3-2025/nov-13-2025-test/
+   # List by company (R2 structure: {company_slug}/{quarter}-{year}/{batch_name}-{job_id}/)
+   rclone ls r2-markethawkeye:markeyhawkeye/nvidia/Q3-2025/nov-13-2025-test-{job_id}/
    ```
 
 4. **Database:**

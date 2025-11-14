@@ -590,7 +590,8 @@ class BatchProcessor:
         metadata = {
             'youtube_id': youtube_id,
             'job_id': job['job_id'],
-            'version': self.version,
+            'batch_name': self.batch_name,
+            'pipeline_type': self.pipeline_type,
             'r2_path': job['r2_upload']['path'],
             'processed_at': datetime.now().isoformat()
         }
@@ -666,14 +667,40 @@ SET
         self.log(f"{'='*60}\n")
 
         job['status'] = 'processing'
+
+        # Initialize processing steps if not present (lazy creation)
+        if 'steps' not in job:
+            job['steps'] = {
+                'download': 'pending',
+                'transcribe': 'pending',
+                'insights': 'pending',
+                'validate': 'pending',
+                'fuzzy_match': 'pending',
+                'extract_audio': 'pending',
+                'upload_r2': 'pending',
+                'update_db': 'pending'
+            }
+
         self.save_batch_config()
 
         # Create job directory
         job_dir = self.jobs_dir / job_id
         job_dir.mkdir(parents=True, exist_ok=True, mode=0o755)
 
-        # Create initial job.yaml
-        self.create_job_yaml(job, job_dir)
+        # Create job.yaml (on-demand, first time only)
+        job_yaml_path = job_dir / 'job.yaml'
+        if not job_yaml_path.exists():
+            self.log(f"[{job_id}] Creating job.yaml")
+            self.create_job_yaml(job, job_dir)
+        else:
+            self.log(f"[{job_id}] Loading existing job.yaml")
+            # Load existing job.yaml and merge with batch config
+            with open(job_yaml_path, 'r') as f:
+                existing_job = yaml.safe_load(f)
+                # Preserve processing state from existing job.yaml
+                if 'processing' in existing_job:
+                    for step, status in existing_job['processing'].items():
+                        job['steps'][step] = status
 
         # Step 1: Download
         if job['steps']['download'] != 'completed':

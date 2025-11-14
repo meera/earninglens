@@ -78,76 +78,32 @@ def create_batch_structure(
 
     # Create batch directories and configs
     batch_configs = []
-    jobs_dir = Path('/var/markethawk/jobs')
-    jobs_dir.mkdir(parents=True, exist_ok=True, mode=0o755)
 
     for batch in batches:
         batch_num = batch['batch_num']
         batch_dir = pipeline_dir / f"batch_{batch_num:03d}"
         batch_dir.mkdir(parents=True, exist_ok=True, mode=0o755)
 
-        # Create lightweight job references for batch.yaml
+        # Create lightweight job references for batch.yaml (no job.yaml created yet)
         jobs = []
         for youtube_id in batch['videos']:
             job_id = generate_job_id(youtube_id)
 
-            # Create job directory
-            job_dir = jobs_dir / job_id
-            job_dir.mkdir(parents=True, exist_ok=True, mode=0o755)
-
-            # Create initial job.yaml
-            job_yaml = {
-                'job_id': job_id,
-                'youtube_id': youtube_id,
-                'batch_id': batch_num,
-                'batch_name': batch_name,
-                'pipeline_type': pipeline_type,
-                'created_at': datetime.now().isoformat(),
-                'status': 'pending',
-
-                # Processing steps
-                'processing': {
-                    'download': 'pending',
-                    'transcribe': 'pending',
-                    'insights': 'pending',
-                    'validate': 'pending',
-                    'fuzzy_match': 'pending',
-                    'extract_audio': 'pending',
-                    'upload_r2': 'pending',
-                    'update_db': 'pending'
-                }
-            }
-
-            job_yaml_path = job_dir / 'job.yaml'
-            with open(job_yaml_path, 'w') as f:
-                yaml.dump(job_yaml, f, default_flow_style=False, sort_keys=False)
-
-            # Lightweight reference in batch.yaml
+            # Just store reference - job.yaml will be created on-demand during processing
             jobs.append({
                 'job_id': job_id,
                 'youtube_id': youtube_id,
-                'status': 'pending',
-                'job_yaml': str(job_yaml_path),
-                'steps': {  # Keep steps for backward compatibility
-                    'download': 'pending',
-                    'transcribe': 'pending',
-                    'insights': 'pending',
-                    'validate': 'pending',
-                    'fuzzy_match': 'pending',
-                    'extract_audio': 'pending',
-                    'upload_r2': 'pending',
-                    'update_db': 'pending'
-                }
+                'status': 'pending'
             })
 
-        # Create lightweight batch.yaml
+        # Create lightweight batch.yaml (no processing steps tracked here)
         batch_config = {
             'batch_num': batch_num,
             'batch_name': batch_name,
             'pipeline_type': pipeline_type,
             'created_at': datetime.now().isoformat(),
             'status': 'pending',
-            'jobs': jobs,  # Just references
+            'jobs': jobs,  # Just youtube_id, job_id, status references
             'stats': {
                 'total': len(jobs),
                 'pending': len(jobs),

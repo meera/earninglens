@@ -510,10 +510,12 @@ psql $NEON_DATABASE_URL -f /tmp/earnings_export.sql
 
 | Script | Purpose | What It Does | What It DOESN'T Do |
 |--------|---------|--------------|---------------------|
-| `batch_setup.py` | Create pipeline structure | Split videos into batches, create YAML configs | ❌ No database setup |
-| `batch_processor.py` | Process single batch | Orchestrate 8 steps, call ffmpeg/rclone/psql | ❌ No custom R2/DB libraries |
+| `batch_setup.py` | Create pipeline structure | Split videos into batches, create lightweight batch.yaml (job references only) | ❌ No job.yaml created upfront (lazy creation) |
+| `batch_processor.py` | Process single batch | Orchestrate 8 steps, create job.yaml on-demand, call ffmpeg/rclone/psql | ❌ No custom R2/DB libraries |
 | `batch_status.py` | View progress | Read YAML files, display stats | ❌ No database queries |
 | `fuzzy_match.py` | Match company to DB | Query PostgreSQL, fuzzy string match | ❌ No updates |
+
+**Lazy Creation:** `batch_setup.py` creates batch structure with lightweight job references. Individual `job.yaml` files are created on-demand during processing, avoiding 1000+ file creation upfront.
 
 ### What We DON'T Build
 
