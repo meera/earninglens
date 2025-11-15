@@ -48,10 +48,12 @@ def get_channel_id_from_username(youtube, username: str) -> Optional[str]:
         )
         response = request.execute()
 
-        if response['items']:
+        if response.get('items'):
             return response['items'][0]['id']
         else:
             print(f"❌ Channel not found for username: {username}")
+            print(f"   Try using the channel ID instead of @username")
+            print(f"   Find channel ID at: https://www.youtube.com/@{username}/about")
             return None
     except HttpError as e:
         print(f"❌ Error fetching channel: {e}")
