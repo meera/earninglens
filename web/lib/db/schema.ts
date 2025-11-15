@@ -431,3 +431,18 @@ export type NewNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;
 
 export type EarningsCall = typeof earningsCalls.$inferSelect;
 export type NewEarningsCall = typeof earningsCalls.$inferInsert;
+
+// ============================================
+// BETTER AUTH TABLES
+// ============================================
+
+// Import and re-export Better Auth tables for drizzle adapter
+export {
+  user,
+  session,
+  account,
+  verification,
+  organization,
+  member,
+  invitation,
+} from './auth-schema';

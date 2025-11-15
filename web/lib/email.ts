@@ -8,7 +8,7 @@ export async function sendEmail({
 }: {
   to: string;
   subject: string;
-  text: string;
+  text?: string;
   html?: string;
 }) {
   const transporter = nodemailer.createTransport({
@@ -25,8 +25,8 @@ export async function sendEmail({
     from: 'Markey HawkEye <meera@videotobe.com>',
     to: to,
     subject: subject,
-    text: text,
-    html: html || `<p>${text}</p>`,
+    text: text || '',
+    html: html || `<p>${text || ''}</p>`,
   };
 
   try {

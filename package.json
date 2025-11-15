@@ -5,11 +5,7 @@
   "description": "Transform earnings calls into visually-enhanced YouTube videos",
   "workspaces": [
     "web",
-    "api",
-    "dashboard",
-    "studio",
-    "insights",
-    "shared/*"
+    "studio"
   ],
   "scripts": {
     "dev": "turbo run dev",
@@ -25,11 +21,18 @@
     "seed:company": "node scripts/seed-company.js"
   },
   "devDependencies": {
+    "drizzle-kit": "^0.31.7",
+    "tsx": "^4.20.6",
     "turbo": "^1.11.0",
     "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.44.7"
   }
 }

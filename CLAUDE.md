@@ -70,6 +70,61 @@ Markey HawkEye transforms earnings call audio into visually-enhanced YouTube vid
 - **Payments:** Stripe (via Better Auth plugin)
 - **Storage:** Cloudflare R2 (bucket: `earninglens`)
 
+
+### Mono Repo Project Structure ### 
+
+```
+markethawk/
+├─ package.json          # Root monorepo, defines workspaces
+├─ node_modules/         # Hoisted dependencies & binaries
+├─ web/                  # Next.js frontend
+│  ├─ package.json
+│  ├─ .env               # Environment variables
+│  └─ drizzle.config.ts
+├─ studio/               # Studio/processing package
+│  └─ package.json
+```
+
+**Key Points:**
+
+* Dependencies are **hoisted to root `node_modules`**; do not create local `node_modules` in packages.
+* Binaries (e.g., `drizzle-kit`) live in `root/node_modules/.bin` but are accessible in package scripts.
+* `.env` files are **package-specific**, loaded automatically by scripts in that package.
+
+**Web package.json scripts:**
+
+```json
+"scripts": {
+  "db:generate": "drizzle-kit generate",
+  "db:migrate": "drizzle-kit migrate",
+  "db:push": "drizzle-kit push",
+  "db:studio": "drizzle-kit studio"
+}
+```
+
+**How to execute DB scripts:**
+
+```bash
+# Install dependencies in the monorepo root
+cd /Users/Meera/markethawk
+npm install
+
+# Navigate to the workspace
+cd web
+
+# Run migrations
+npm run db:generate
+npm run db:migrate
+npm run db:push
+npm run db:studio
+```
+
+**Notes:**
+
+* Scripts automatically resolve `drizzle-kit` from hoisted `.bin`.
+* Avoid local `node_modules` in packages to prevent broken binaries.
+* Keep `.env` per package; do not commit secrets.
+
 ### Database Schema (Companies)
 
 **Source:** SEC company_tickers.json (authoritative source for company names and CIK)

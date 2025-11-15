@@ -1,93 +1,64 @@
 'use client';
 
-import { useEffect } from 'react';
-import Script from 'next/script';
-import { useSession } from '@/lib/auth-client';
+import { useEffect, useState } from 'react';
+import { useSession, oneTap } from '@/lib/auth-client';
 
+/**
+ * Google One Tap Component
+ * Uses Better Auth's built-in One Tap plugin
+ */
 export function GoogleOneTap() {
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
+  const [initialized, setInitialized] = useState(false);
+
+  console.log('GoogleOneTap component rendered', { session, isPending, initialized });
 
   useEffect(() => {
-    // Only show if user is not logged in
-    if (session) return;
+    // Don't initialize if:
+    // - Session is still loading
+    // - User is already logged in
+    // - Already initialized
+    if (isPending || session || initialized) return;
 
-    // Check if user dismissed One Tap
-    const dismissed = localStorage.getItem('google_one_tap_dismissed');
-    if (dismissed) return;
+    console.log('Initializing Google One Tap...');
 
-    // Initialize Google One Tap
-    if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-        callback: handleCredentialResponse,
-        auto_select: true, // Auto-select if user previously signed in
-        cancel_on_tap_outside: false, // Don't close on outside click
-        context: 'signin',
-      });
+    // Initialize Better Auth One Tap
+    const initOneTap = async () => {
+      try {
+        setInitialized(true);
 
-      // Display the One Tap prompt
-      window.google.accounts.id.prompt((notification: any) => {
-        if (notification.isNotDisplayed()) {
-          console.log('One Tap not displayed:', notification.getNotDisplayedReason());
-        }
+        await oneTap({
+          callbackURL: '/',
+          onPromptNotification: (notification: any) => {
+            console.log('One Tap notification:', notification);
+          },
+          fetchOptions: {
+            onSuccess: () => {
+              console.log('Sign-in successful!');
+              window.location.reload();
+            },
+            onError: (error) => {
+              console.error('One Tap sign-in error:', error);
+              setInitialized(false); // Allow retry on error
+            },
+          },
+        });
 
-        if (notification.isSkippedMoment()) {
-          console.log('One Tap skipped:', notification.getSkippedReason());
-        }
-
-        if (notification.getDismissedReason()) {
-          // User dismissed, don't show again this session
-          localStorage.setItem('google_one_tap_dismissed', 'true');
-        }
-      });
-    }
-  }, [session]);
-
-  async function handleCredentialResponse(response: any) {
-    try {
-      // Send credential to Better Auth backend
-      const res = await fetch('/api/auth/google-one-tap', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: response.credential }),
-      });
-
-      if (res.ok) {
-        // User is now signed in, reload page
-        window.location.reload();
-      } else {
-        console.error('Failed to sign in with Google One Tap');
+        console.log('Google One Tap initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize One Tap:', error);
+        setInitialized(false); // Allow retry on error
       }
-    } catch (error) {
-      console.error('Error signing in with Google One Tap:', error);
-    }
-  }
-
-  // Don't render if user is already logged in
-  if (session) return null;
-
-  return (
-    <>
-      <Script
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-        onLoad={() => console.log('Google One Tap script loaded')}
-      />
-      <div id="g_id_onload" />
-    </>
-  );
-}
-
-// Extend Window interface for TypeScript
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: any) => void;
-          prompt: (callback?: (notification: any) => void) => void;
-        };
-      };
     };
-  }
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      initOneTap();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [session, isPending, initialized]);
+
+  // This component doesn't render anything visible
+  return null;
 }
