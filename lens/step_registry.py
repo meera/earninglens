@@ -16,7 +16,7 @@ from extract_insights_structured import extract_earnings_insights, extract_earni
 from refine_timestamps import refine_job_timestamps
 from scripts.download_source import download_video
 from scripts.parse_metadata import parse_video_metadata
-from scripts.upload_youtube import upload_to_youtube
+from scripts.upload_youtube import upload_video
 
 # Import new step handlers (will be created)
 try:
@@ -98,7 +98,7 @@ STEP_HANDLERS: Dict[str, Callable] = {
     'download_source': download_video,
     'download_source_cached': download_source_cached,
     'parse_metadata': parse_video_metadata,
-    'upload_youtube': upload_to_youtube,
+    'upload_youtube': upload_video,
 
     # New step handlers (manual-audio workflow)
     'copy_audio_to_job': copy_audio_to_job,
