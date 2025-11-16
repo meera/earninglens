@@ -128,15 +128,15 @@ class JobManager:
 def create_job(args):
     """Create new job"""
 
-    # Determine workflow (default based on input type)
+    # Workflow must be explicitly specified
     workflow = args.workflow
     if not workflow:
-        if args.audio:
-            workflow = 'manual-audio'
-        elif args.url:
-            workflow = 'youtube-video'
-        else:
-            workflow = 'youtube-video'  # default
+        print("Error: --workflow is required")
+        print("Available workflows:")
+        print("  manual-audio    - For manually downloaded MP3/audio files")
+        print("  youtube-video   - For YouTube videos (standard pipeline)")
+        print("  audio-batch     - For batch processing multiple videos")
+        sys.exit(1)
 
     # Generate job ID
     ticker = args.ticker.upper() if args.ticker else 'UNKNOWN'
@@ -352,7 +352,7 @@ def main():
     create_parser.add_argument('--ticker', help='Company ticker (e.g., NVDA) - optional for manual-audio, auto-extracted')
     create_parser.add_argument('--quarter', help='Quarter (e.g., Q3) - optional for manual-audio, auto-extracted')
     create_parser.add_argument('--company', help='Company name (optional)')
-    create_parser.add_argument('--workflow', help='Workflow name (manual-audio, youtube-video, audio-batch) - auto-detected if not specified')
+    create_parser.add_argument('--workflow', required=True, help='Workflow name: manual-audio, youtube-video, or audio-batch')
 
     # List jobs
     list_parser = subparsers.add_parser('list', help='List all jobs')

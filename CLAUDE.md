@@ -272,33 +272,104 @@ markethawk/
 **Recipes and companion documentation are in PRD/ directory.** 
 ---
 
-## Job-Based Workflow
+## Workflow-Based Processing System
+
+**Architecture:** Jobs are processed through composable workflows defined in YAML files.
 
 **Single source of truth:** `job.yaml` in each job directory
 
-### Create Job
+### Available Workflows
+
+**Location:** `lens/workflows/*.yaml`
+
+1. **manual-audio** - Manually downloaded MP3/audio files
+   - LLM extracts metadata from transcript
+   - Interactive confirmation
+   - No ticker/quarter required upfront
+
+2. **youtube-video** - YouTube videos (standard pipeline)
+   - Download → Transcribe → Insights → Render
+
+3. **audio-batch** - Batch processing multiple videos
+   - Auto-detection + fuzzy matching
+   - Database storage
+
+### Create Job (Explicit Workflow Selection)
+
+**IMPORTANT:** Always specify `--workflow` explicitly.
+
 ```bash
 cd ~/markethawk
 source .venv/bin/activate
+
+# Manual audio workflow (for downloaded MP3 files)
 python lens/job.py create \
+  --workflow manual-audio \
+  --audio /path/to/earnings_call.mp3
+
+# YouTube video workflow
+python lens/job.py create \
+  --workflow youtube-video \
+  --ticker NVDA \
+  --quarter Q3 \
+  --url "https://youtube.com/watch?v=..."
+
+# HLS stream workflow
+python lens/job.py create \
+  --workflow youtube-video \
   --ticker BIP \
   --quarter Q3-2025 \
   --company "Brookfield Infrastructure Partners LP" \
   --url "https://media.main.pro2.mas.media-server.com/.../audio.m3u8"
 ```
 
-### Process Job (All Steps)
+### Run Workflow
+
+**Use `lens/workflow.py` (replaces deprecated `process_job_pipeline.py`)**
+
 ```bash
-python lens/process_job_pipeline.py /var/markethawk/jobs/{JOB_ID}/job.yaml
+# Run all steps in workflow
+python lens/workflow.py /var/markethawk/jobs/{JOB_ID}/job.yaml
+
+# Run single step
+python lens/workflow.py /var/markethawk/jobs/{JOB_ID}/job.yaml --step transcribe
+
+# Run from specific step onwards
+python lens/workflow.py /var/markethawk/jobs/{JOB_ID}/job.yaml --from-step extract_insights
+
+# List available step handlers
+python lens/workflow.py --list-handlers
 ```
 
-**Pipeline steps:**
-1. Download (YouTube or HLS stream or manually downloaded)
-2. Parse metadata (ticker, quarter, company)
-3. Transcribe (WhisperX with speaker diarization + word-level timestamps)
-4. Detect trim point (skip silence)
-5. Extract insights (OpenAI structured outputs - paragraph-level timestamps)
-6. **Refine timestamps** (word-level precision with +30s search window)
+### Workflow Customization
+
+**Edit workflow YAML files to customize processing:**
+
+```bash
+# Edit workflows
+code lens/workflows/manual-audio.yaml
+code lens/workflows/youtube-video.yaml
+code lens/workflows/audio-batch.yaml
+```
+
+**Customization options:**
+- Remove steps you don't need
+- Change `required: true/false` flags
+- Modify `skip_if` conditions
+- Reorder steps
+- Add new steps (create handler in `lens/steps/`)
+
+**Common workflow steps:**
+1. Download / Copy Audio
+2. Transcribe (WhisperX with speaker diarization + word-level timestamps)
+3. Extract metadata (LLM or manual)
+4. Extract insights (OpenAI structured outputs)
+5. Refine timestamps (word-level precision)
+6. Upload artifacts (R2)
+7. Render video (Remotion)
+8. Generate thumbnails
+9. Upload to YouTube
+10. Update database
 
 ### Start Media Server (Background)
 
