@@ -224,6 +224,7 @@ export default async function HomePage({
               <Link href="/about" className="text-text-tertiary hover:text-accent transition-colors">
                 About
               </Link>
+              <span className="text-text-tertiary/60">v0.1.0</span>
             </div>
           </div>
         </div>
