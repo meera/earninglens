@@ -19,18 +19,28 @@ def interactive_confirm_metadata(job_dir: Path, job_data: Dict[str, Any]) -> Dic
     Returns:
         Result dict with confirmed metadata
     """
-    # Get extracted metadata from previous step
-    extract_metadata_result = job_data.get('processing', {}).get('extract_metadata', {})
-    if not extract_metadata_result:
+    # Get extracted metadata from extract_insights step
+    # Read from insights.raw.json file
+    insights_result = job_data.get('processing', {}).get('extract_insights', {})
+    if not insights_result:
         raise ValueError(
-            "No metadata extraction results found. Run 'extract_metadata' step first"
+            "No insights extraction results found. Run 'extract_insights' step first"
         )
 
-    extracted = extract_metadata_result.get('extracted', {})
-    ticker = extracted.get('ticker')
-    company = extracted.get('company')
-    quarter = extracted.get('quarter')
-    year = extracted.get('year')
+    insights_file = insights_result.get('insights_file')
+    if not insights_file or not Path(insights_file).exists():
+        raise ValueError(f"Insights file not found: {insights_file}")
+
+    # Load insights JSON to extract metadata
+    import json
+    with open(insights_file, 'r') as f:
+        insights_data = json.load(f)
+        insights_obj = insights_data.get('insights', {})
+
+    ticker = insights_obj.get('company_ticker')
+    company = insights_obj.get('company_name')
+    quarter = insights_obj.get('quarter')
+    year = insights_obj.get('year')
 
     print(f"\n{'='*60}")
     print("Extracted Metadata (confirm or edit):")

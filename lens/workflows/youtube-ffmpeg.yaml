@@ -1,0 +1,75 @@
+# YouTube FFmpeg Workflow
+# For processing earnings calls from YouTube with FFmpeg rendering (simpler than Remotion)
+
+name: youtube-ffmpeg
+description: Process YouTube earnings calls with LLM extraction and FFmpeg rendering
+
+steps:
+  # Step 1: Download video from YouTube (with caching)
+  - name: download
+    handler: download_source_cached
+    required: true
+    description: Download video from YouTube URL (checks cache first)
+
+  # Step 2: Transcribe with WhisperX
+  - name: transcribe
+    handler: transcribe_whisperx
+    required: true
+    description: Transcribe audio with speaker diarization
+    skip_if: "processing.download.status != 'completed'"
+
+  # Step 3: Extract insights (includes company/ticker/quarter + metrics/highlights)
+  - name: extract_insights
+    handler: extract_insights_structured
+    required: true
+    description: Extract company/ticker/quarter/year + financial metrics and highlights
+    skip_if: "processing.transcribe.status != 'completed'"
+
+  # Step 4: Human confirmation (review and edit extracted metadata)
+  - name: confirm_metadata
+    handler: interactive_confirm_metadata
+    required: true
+    description: Review and confirm company/ticker/quarter metadata
+    skip_if: "processing.extract_insights.status != 'completed'"
+
+  # Step 5: Refine timestamps
+  - name: refine_timestamps
+    handler: refine_timestamps
+    required: true
+    description: Refine timestamps to word-level precision
+    skip_if: "processing.extract_insights.status != 'completed'"
+
+  # Step 6: Upload artifacts to R2
+  - name: upload_artifacts
+    handler: upload_artifacts_r2
+    required: true
+    description: Upload transcript, insights, job.json to R2
+    skip_if: "processing.refine_timestamps.status != 'completed'"
+
+  # Step 7: Create banner
+  - name: create_banner
+    handler: create_banner
+    required: true
+    description: Generate static banner image for video
+    skip_if: "processing.confirm_metadata.status != 'completed'"
+
+  # Step 8: Render with FFmpeg
+  - name: ffmpeg_render
+    handler: ffmpeg_render
+    required: true
+    description: Render video with FFmpeg (audio + banner)
+    skip_if: "processing.create_banner.status != 'completed'"
+
+  # Step 9: Upload media to R2
+  - name: upload_r2
+    handler: upload_media_r2
+    required: true
+    description: Upload rendered video to R2
+    skip_if: "processing.ffmpeg_render.status != 'completed'"
+
+  # Step 10: Update database
+  - name: update_database
+    handler: update_database
+    required: false
+    description: Update earnings_calls table in database
+    skip_if: "processing.upload_r2.status != 'completed'"
