@@ -1,4 +1,4 @@
-CREATE SCHEMA "markethawkeye";
+CREATE SCHEMA IF NOT EXISTS "markethawkeye";
 --> statement-breakpoint
 CREATE TABLE "markethawkeye"."account" (
 	"id" varchar(255) PRIMARY KEY NOT NULL,
