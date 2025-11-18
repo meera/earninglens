@@ -32,7 +32,14 @@ steps:
     description: Review and confirm company/ticker/quarter metadata
     skip_if: "processing.extract_insights.status != 'completed'"
 
-  # Step 5: Refine timestamps
+  # Step 5: Match company to get CIK
+  - name: match_company
+    handler: match_company
+    required: false
+    description: Fuzzy match company name/ticker to get CIK from database
+    skip_if: "processing.confirm_metadata.status != 'completed'"
+
+  # Step 6: Refine timestamps
   - name: refine_timestamps
     handler: refine_timestamps
     required: true
