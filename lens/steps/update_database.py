@@ -37,7 +37,8 @@ def update_database(job_dir: Path, job_data: Dict[str, Any]) -> Dict[str, Any]:
     job_id = job_data.get('job_id')
 
     # Get CIK from company database match (if available)
-    company_match = job_data.get('company_match', {})
+    match_result = job_data.get('processing', {}).get('match_company', {})
+    company_match = match_result.get('company_match', {})
     cik_str = company_match.get('cik_str', '')
 
     # Get media URL from R2 upload step
