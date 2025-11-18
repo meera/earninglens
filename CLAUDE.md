@@ -38,16 +38,17 @@ Markey HawkEye transforms earnings call audio into visually-enhanced YouTube vid
 
 ### Pipeline Consistency (CRITICAL)
 
-**Render Output Filename:**
-- ALL render methods MUST produce `rendered.mp4` (never method-specific names like `ffmpeg_render.mp4` or `remotion_render.mp4`)
-- This ensures consistent R2 URLs regardless of render method used
-- Location: `{job_dir}/renders/rendered.mp4`
+**Render Output Filename (MOST IMPORTANT):**
+- ALL render methods MUST output to: `{job_dir}/renders/rendered.mp4`
+- NEVER use method-specific names (`ffmpeg_render.mp4`, `remotion_render.mp4`)
+- Ensures consistent R2 URLs: `r2://{bucket}/{company}/{year}/{quarter}/{job_id}/rendered.mp4`
+- Traceability: Job ID and workflow name identify render method (e.g., `job_youtube-ffmpeg_*`)
 
-**R2 Bucket Name:**
-- ALWAYS use `markeyhawkeye` bucket (production bucket)
-- NO separate dev bucket (`dev-markethawkeye` is deprecated)
-- This ensures R2 URLs are portable between dev and production databases
-- Dev/prod separation is ONLY at database level, NOT R2 storage
+**R2 Bucket Strategy:**
+- Dev environment (`DEV_MODE=true`): Upload to `dev-markethawkeye`, store URLs as `r2://dev-markethawkeye/...`
+- Prod environment (`DEV_MODE=false`): Upload to `markeyhawkeye`, store URLs as `r2://markeyhawkeye/...`
+- URLs must be honest (match actual file location, never lie about bucket)
+- Migration: Copy files to prod bucket + update database with `DEV_MODE=false`
 
 ### Approved Data Sources (Trust Hierarchy)
 
