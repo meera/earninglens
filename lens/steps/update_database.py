@@ -130,6 +130,7 @@ INSERT INTO markethawkeye.earnings_calls (
 )
 ON CONFLICT (id) DO UPDATE
 SET
+    cik_str = EXCLUDED.cik_str,
     media_url = EXCLUDED.media_url,
     is_latest = EXCLUDED.is_latest,
     metadata = EXCLUDED.metadata,
