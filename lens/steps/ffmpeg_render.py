@@ -19,14 +19,15 @@ def ffmpeg_render(job_dir: Path, job_data: Dict[str, Any]) -> Dict[str, Any]:
         Result dict with render info
     """
 
-    # Find audio file (convention-based path)
-    audio_file = job_dir / "input" / "source.mp3"
-    if not audio_file.exists():
-        # Try other extensions
-        audio_files = list((job_dir / "input").glob("source.*"))
-        if not audio_files:
-            raise FileNotFoundError(f"No audio file found in {job_dir / 'input'}")
-        audio_file = audio_files[0]
+    # Find input video file (source video with original audio)
+    input_video = job_dir / "input" / "source.mp4"
+    if not input_video.exists():
+        # Try other video extensions
+        video_files = list((job_dir / "input").glob("source.*"))
+        video_files = [f for f in video_files if f.suffix.lower() in ['.mp4', '.mov', '.avi', '.mkv', '.webm']]
+        if not video_files:
+            raise FileNotFoundError(f"No video file found in {job_dir / 'input'}")
+        input_video = video_files[0]
 
     # Find banner image (created by create_banner step)
     banner_path = job_dir / "renders" / "banner.png"
@@ -43,23 +44,26 @@ def ffmpeg_render(job_dir: Path, job_data: Dict[str, Any]) -> Dict[str, Any]:
     output_video = renders_dir / "ffmpeg_render.mp4"
 
     print(f"🎬 Rendering video with FFmpeg...")
-    print(f"   Audio: {audio_file.name}")
+    print(f"   Input video: {input_video.name}")
     print(f"   Banner: {banner_path.name}")
     print(f"   Output: {output_video.name}")
+    print(f"   Strategy: Extract audio from input video + overlay banner image")
 
-    # FFmpeg command: combine static image + audio
+    # FFmpeg command: use banner as video track + extract audio from input video
     cmd = [
         'ffmpeg',
-        '-loop', '1',  # Loop the image
-        '-i', str(banner_path),  # Input image
-        '-i', str(audio_file),  # Input audio
-        '-c:v', 'libx264',  # Video codec
-        '-tune', 'stillimage',  # Optimize for static image
-        '-c:a', 'aac',  # Audio codec
-        '-b:a', '192k',  # Audio bitrate
-        '-pix_fmt', 'yuv420p',  # Pixel format for compatibility
-        '-shortest',  # End when audio ends
-        '-y',  # Overwrite output file
+        '-loop', '1',                    # Loop the banner image
+        '-i', str(banner_path),          # Input: banner image (video track)
+        '-i', str(input_video),          # Input: source video (for audio track)
+        '-c:v', 'libx264',               # Video codec
+        '-tune', 'stillimage',           # Optimize for static image
+        '-c:a', 'aac',                   # Audio codec
+        '-b:a', '192k',                  # Audio bitrate
+        '-pix_fmt', 'yuv420p',           # Pixel format for compatibility
+        '-map', '0:v:0',                 # Map video from first input (banner)
+        '-map', '1:a:0',                 # Map audio from second input (source video)
+        '-shortest',                     # End when shortest stream ends
+        '-y',                            # Overwrite output file
         str(output_video)
     ]
 
