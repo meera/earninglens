@@ -133,8 +133,16 @@ SET
     updated_at = NOW();
 """
 
-    # Get database URL from environment
-    database_url = os.getenv('DATABASE_URL')
+    # Get database URL based on environment (dev vs prod)
+    DEV_MODE = os.getenv('DEV_MODE', 'false').lower() == 'true'
+
+    if DEV_MODE:
+        # Dev: Use local PostgreSQL
+        database_url = os.getenv('DEV_DATABASE_URL', 'postgresql://postgres:postgres@192.168.86.250:54322/markethawk')
+    else:
+        # Production: Use Neon
+        database_url = os.getenv('DATABASE_URL', 'postgresql://neondb_owner:npg_e1uBMOdh5QUy@ep-twilight-leaf-a4dgbd70.us-east-1.aws.neon.tech/neondb?sslmode=require')
+
     if not database_url:
         raise ValueError("DATABASE_URL environment variable not set")
 
