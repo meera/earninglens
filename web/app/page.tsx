@@ -99,6 +99,9 @@ export default async function HomePage({
               <Link href="/" className="text-primary font-medium transition-colors text-sm">
                 Companies
               </Link>
+              <Link href="/pricing" className="text-text-tertiary hover:text-primary transition-colors text-sm">
+                Pricing
+              </Link>
               <Link href="/about" className="text-text-tertiary hover:text-primary transition-colors text-sm">
                 About
               </Link>
