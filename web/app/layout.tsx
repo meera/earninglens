@@ -19,6 +19,10 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Markey HawkEye - Transform Earnings Calls into Visual Insights",
   description: "Don't read boring transcripts. Hear the actual call. Spot discrepancies, catch executive hesitation, and understand what tone reveals.",
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({

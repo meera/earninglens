@@ -15,57 +15,34 @@ const plans = [
     name: 'Free',
     price: '$0',
     period: 'forever',
-    description: 'Perfect for trying out our platform',
+    description: 'Explore earnings calls',
     features: [
-      '3 video views per month',
-      'Access to top 100 companies',
-      'Basic company search',
-      '480p video quality',
+      'Browse all 7,372 companies',
+      'Access company pages',
+      'View company information',
       'Community support',
     ],
-    cta: 'Get Started',
-    href: '/api/auth/google-one-tap',
+    cta: 'Current Plan',
+    href: '/auth/signin',
     highlighted: false,
+    disabled: true,
   },
   {
-    name: 'Pro',
-    price: '$19',
+    name: 'Standard',
+    price: '$39',
     period: 'per month',
-    yearlyPrice: '$190',
-    yearlyPeriod: 'per year',
-    savings: 'Save 17%',
-    description: 'For serious investors and analysts',
+    description: 'Unlimited access to earnings calls',
     features: [
-      'Unlimited video views',
-      'All 7,372 companies',
-      '1080p HD video quality',
-      'Download transcripts',
-      'Email alerts for new earnings',
+      'Unlimited full earnings call audio',
+      'AI-generated insights & analysis',
+      'Complete transcripts',
       'Priority support',
+      'Cancel anytime',
     ],
-    cta: 'Start Pro Trial',
-    href: '/api/billing/checkout?plan=pro',
+    cta: 'Subscribe Now',
+    href: '/api/billing/checkout?plan=standard',
     highlighted: true,
-  },
-  {
-    name: 'Team',
-    price: '$49',
-    period: 'per month',
-    yearlyPrice: '$490',
-    yearlyPeriod: 'per year',
-    savings: 'Save 17%',
-    description: 'For investment firms and teams',
-    features: [
-      'Everything in Pro',
-      '5 team members',
-      'API access (coming soon)',
-      'Custom integrations',
-      'Dedicated support',
-      'White-label options',
-    ],
-    cta: 'Start Team Trial',
-    href: '/api/billing/checkout?plan=team',
-    highlighted: false,
+    disabled: false,
   },
 ];
 
@@ -121,7 +98,7 @@ export default async function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
+        <div className="grid md:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
           {plans.map((plan) => (
             <div
               key={plan.name}
@@ -134,7 +111,7 @@ export default async function PricingPage() {
               {plan.highlighted && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <span className="bg-primary text-white px-4 py-1 rounded-full text-sm font-semibold">
-                    Most Popular
+                    Recommended
                   </span>
                 </div>
               )}
@@ -149,13 +126,6 @@ export default async function PricingPage() {
                   <span className="text-5xl font-bold text-text-primary">{plan.price}</span>
                   <span className="text-text-tertiary">{plan.period}</span>
                 </div>
-                {plan.yearlyPrice && (
-                  <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-2xl font-semibold text-text-secondary">{plan.yearlyPrice}</span>
-                    <span className="text-text-tertiary text-sm">{plan.yearlyPeriod}</span>
-                    <span className="text-primary text-sm font-semibold">{plan.savings}</span>
-                  </div>
-                )}
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -177,7 +147,9 @@ export default async function PricingPage() {
               <Link
                 href={plan.href}
                 className={`block text-center px-6 py-3 rounded-lg font-semibold transition-all ${
-                  plan.highlighted
+                  plan.disabled
+                    ? 'bg-background-elevated border border-border text-text-tertiary cursor-not-allowed'
+                    : plan.highlighted
                     ? 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20'
                     : 'bg-background-elevated hover:bg-background-muted border border-border text-primary'
                 }`}
@@ -197,11 +169,10 @@ export default async function PricingPage() {
           <div className="space-y-6">
             <div className="bg-background-muted/40 border border-border rounded-xl p-6">
               <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Can I switch plans anytime?
+                Can I cancel anytime?
               </h3>
               <p className="text-text-secondary">
-                Yes! Upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll
-                prorate any unused time.
+                Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your billing period.
               </p>
             </div>
 
@@ -210,26 +181,16 @@ export default async function PricingPage() {
                 What payment methods do you accept?
               </h3>
               <p className="text-text-secondary">
-                We accept all major credit cards (Visa, Mastercard, American Express, Discover) through Stripe.
+                We accept all major credit cards (Visa, Mastercard, American Express) through Stripe.
               </p>
             </div>
 
             <div className="bg-background-muted/40 border border-border rounded-xl p-6">
               <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Is there a free trial for paid plans?
+                Is there a free trial?
               </h3>
               <p className="text-text-secondary">
-                Yes! All paid plans come with a 7-day free trial. No credit card required to start.
-              </p>
-            </div>
-
-            <div className="bg-background-muted/40 border border-border rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Do you offer refunds?
-              </h3>
-              <p className="text-text-secondary">
-                Yes! We offer a 30-day money-back guarantee. If you're not satisfied, we'll refund your
-                subscription, no questions asked.
+                No free trial currently, but you can explore all company pages and browse earnings calls for free before subscribing.
               </p>
             </div>
           </div>

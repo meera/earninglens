@@ -110,11 +110,20 @@ async function transferBillingToOldestAdmin(orgId: string, leavingOwnerId: strin
 // ============================================
 
 export const auth = betterAuth({
+  // Use X-Forwarded-Host header to support both www and non-www domains
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  basePath: '/api/auth',
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema,
   }),
+  advanced: {
+    useSecureCookies: process.env.NODE_ENV === 'production',
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: '.markethawkeye.com', // Works for both www and non-www
+    },
+  },
   logger: {
     verboseLogging: true,
     disabled: false,
@@ -217,8 +226,36 @@ export const auth = betterAuth({
     stripe({
       stripeClient,
       stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || 'placeholder_webhook_secret',
-      // TODO: Full Stripe configuration pending
-      // Products, webhooks, and authorization will be configured when implementing subscription features
+      createCustomerOnSignUp: true,
+
+      subscription: {
+        enabled: true,
+
+        // Standard subscription ($39/month)
+        // Payment link: https://buy.stripe.com/9B65kCbaj0vc0CJbUu6AM00
+        plans: [
+          {
+            name: 'standard',
+            priceId: process.env.STRIPE_STANDARD_PRICE_ID || '', // Get from Stripe dashboard
+          },
+        ],
+
+        // Lifecycle hooks
+        onSubscriptionComplete: async ({ plan }) => {
+          console.log(`✅ New subscription to ${plan.name}`);
+          // Future: Send welcome email
+        },
+
+        onSubscriptionCancel: async () => {
+          console.log(`❌ Subscription canceled`);
+          // Future: Send cancellation survey
+        },
+      },
+
+      // Customer creation
+      onCustomerCreate: async ({ stripeCustomer, user }) => {
+        console.log(`✅ Stripe customer ${stripeCustomer.id} created for ${user.email}`);
+      },
     }),
   ],
 
