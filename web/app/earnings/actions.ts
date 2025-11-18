@@ -1,17 +1,34 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { earningsCalls } from '@/lib/db/schema';
+import { earningsCalls, companies } from '@/lib/db/schema';
 import { desc, eq, and } from 'drizzle-orm';
 
 /**
- * Get all earnings calls with pagination
+ * Get all earnings calls with pagination (joined with companies for slug)
  */
 export async function getEarningsCalls(limit: number = 50, offset: number = 0) {
   try {
     const calls = await db
-      .select()
+      .select({
+        id: earningsCalls.id,
+        cikStr: earningsCalls.cikStr,
+        symbol: earningsCalls.symbol,
+        quarter: earningsCalls.quarter,
+        year: earningsCalls.year,
+        mediaUrl: earningsCalls.mediaUrl,
+        youtubeId: earningsCalls.youtubeId,
+        metadata: earningsCalls.metadata,
+        transcripts: earningsCalls.transcripts,
+        insights: earningsCalls.insights,
+        isLatest: earningsCalls.isLatest,
+        createdAt: earningsCalls.createdAt,
+        updatedAt: earningsCalls.updatedAt,
+        companySlug: companies.slug,
+        companyName: companies.name,
+      })
       .from(earningsCalls)
+      .leftJoin(companies, eq(earningsCalls.symbol, companies.ticker))
       .orderBy(desc(earningsCalls.createdAt))
       .limit(limit)
       .offset(offset);
@@ -81,5 +98,50 @@ export async function getEarningsCallsByCik(cikStr: string) {
   } catch (error) {
     console.error('Error fetching earnings calls by CIK:', error);
     return { success: false, error: 'Failed to fetch earnings calls' };
+  }
+}
+
+/**
+ * Get earnings call by company slug, quarter, and year
+ */
+export async function getEarningsCallBySlug(companySlug: string, quarter: string, year: number) {
+  try {
+    const result = await db
+      .select({
+        id: earningsCalls.id,
+        cikStr: earningsCalls.cikStr,
+        symbol: earningsCalls.symbol,
+        quarter: earningsCalls.quarter,
+        year: earningsCalls.year,
+        mediaUrl: earningsCalls.mediaUrl,
+        youtubeId: earningsCalls.youtubeId,
+        metadata: earningsCalls.metadata,
+        transcripts: earningsCalls.transcripts,
+        insights: earningsCalls.insights,
+        isLatest: earningsCalls.isLatest,
+        createdAt: earningsCalls.createdAt,
+        updatedAt: earningsCalls.updatedAt,
+        companySlug: companies.slug,
+        companyName: companies.name,
+      })
+      .from(earningsCalls)
+      .innerJoin(companies, eq(earningsCalls.symbol, companies.ticker))
+      .where(
+        and(
+          eq(companies.slug, companySlug),
+          eq(earningsCalls.quarter, quarter.toUpperCase()),
+          eq(earningsCalls.year, year)
+        )
+      )
+      .limit(1);
+
+    if (!result || result.length === 0) {
+      return { success: false, error: 'Earnings call not found' };
+    }
+
+    return { success: true, data: result[0] };
+  } catch (error) {
+    console.error('Error fetching earnings call by slug:', error);
+    return { success: false, error: 'Failed to fetch earnings call' };
   }
 }

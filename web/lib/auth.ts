@@ -1,22 +1,13 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { organization } from 'better-auth/plugins/organization';
-import { stripe } from '@better-auth/stripe';
+// import { stripe } from '@better-auth/stripe';  // TODO: Enable when implementing monetization
 import { db } from './db';
 import * as schema from './db/schema';
 import { member as memberTable } from './db/auth-schema';
 import { eq } from 'drizzle-orm';
-import Stripe from 'stripe';
+// import Stripe from 'stripe';  // TODO: Enable when implementing monetization
 import { sendEmail } from './email';
-
-// Initialize Stripe client - required for production
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is required. Please set it in your environment variables.');
-}
-
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-10-29.clover',
-});
 
 // ============================================
 // HELPER FUNCTIONS
@@ -223,40 +214,13 @@ export const auth = betterAuth({
       },
     }),
 
-    stripe({
-      stripeClient,
-      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || 'placeholder_webhook_secret',
-      createCustomerOnSignUp: true,
-
-      subscription: {
-        enabled: true,
-
-        // Standard subscription ($39/month)
-        // Payment link: https://buy.stripe.com/9B65kCbaj0vc0CJbUu6AM00
-        plans: [
-          {
-            name: 'standard',
-            priceId: process.env.STRIPE_STANDARD_PRICE_ID || '', // Get from Stripe dashboard
-          },
-        ],
-
-        // Lifecycle hooks
-        onSubscriptionComplete: async ({ plan }) => {
-          console.log(`✅ New subscription to ${plan.name}`);
-          // Future: Send welcome email
-        },
-
-        onSubscriptionCancel: async () => {
-          console.log(`❌ Subscription canceled`);
-          // Future: Send cancellation survey
-        },
-      },
-
-      // Customer creation
-      onCustomerCreate: async ({ stripeCustomer, user }) => {
-        console.log(`✅ Stripe customer ${stripeCustomer.id} created for ${user.email}`);
-      },
-    }),
+    // Stripe plugin - disabled for now
+    // TODO: Enable when implementing monetization
+    // stripe({
+    //   stripeClient,
+    //   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    //   createCustomerOnSignUp: false,
+    // }),
   ],
 
   trustedOrigins: [

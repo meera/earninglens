@@ -36,17 +36,21 @@ export default async function EarningsCallsPage() {
         <div className="grid gap-4">
           {calls.map((call) => {
             const metadata = call.metadata || {};
-            const companyName = metadata.company_name || 'Unknown Company';
-            const pipelineType = metadata.pipeline_type || 'unknown';
-            const batchName = metadata.batch_name || 'unknown';
+            const insights = call.insights || {};
+            const companyName = call.companyName || insights.company_name || metadata.company_name || 'Unknown Company';
             const processedAt = metadata.processed_at
               ? new Date(metadata.processed_at).toLocaleDateString()
               : 'Unknown date';
 
+            // Generate SEO-friendly URL: /earnings/playboy/q3-2025
+            const quarterSlug = call.quarter.toLowerCase();
+            const slug = call.companySlug || call.symbol.toLowerCase(); // Fallback to symbol if no company slug
+            const earningsUrl = `/earnings/${slug}/${quarterSlug}-${call.year}`;
+
             return (
               <Link
                 key={call.id}
-                href={`/earnings/${call.id}`}
+                href={earningsUrl}
                 className="block p-6 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all"
               >
                 <div className="flex justify-between items-start">
@@ -59,10 +63,6 @@ export default async function EarningsCallsPage() {
                       <span>
                         {call.quarter} {call.year}
                       </span>
-                      <span className="text-gray-400">•</span>
-                      <span>Pipeline: {pipelineType}</span>
-                      <span className="text-gray-400">•</span>
-                      <span>Batch: {batchName}</span>
                     </div>
                     {call.youtubeId && (
                       <div className="mt-2">

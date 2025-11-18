@@ -26,12 +26,8 @@ export const user = markethawkSchema.table('user', {
   emailVerified: boolean('emailVerified').notNull().default(false),
   image: varchar('image', { length: 512 }),
 
-  // Subscription & Usage Tracking
-  subscriptionTier: varchar('subscriptionTier', { length: 50 }).default('free'),  // 'free' or 'premium'
-  stripeCustomerId: varchar('stripeCustomerId', { length: 255 }),
-  stripeSubscriptionId: varchar('stripeSubscriptionId', { length: 255 }),
-  subscriptionStatus: varchar('subscriptionStatus', { length: 50 }),  // 'active', 'canceled', 'past_due'
-  subscriptionEndsAt: timestamp('subscriptionEndsAt'),
+  // Subscription fields managed by Better Auth Stripe plugin
+  // (Better Auth will handle these automatically)
 
   // Daily View Tracking
   dailyViewCount: integer('dailyViewCount').default(0),

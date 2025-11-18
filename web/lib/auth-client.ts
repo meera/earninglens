@@ -2,7 +2,7 @@
 
 import { createAuthClient } from 'better-auth/react';
 import { organizationClient, oneTapClient } from 'better-auth/client/plugins';
-import { stripeClient } from '@better-auth/stripe/client';
+// import { stripeClient } from '@better-auth/stripe/client';  // TODO: Enable when implementing monetization
 
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
@@ -13,7 +13,7 @@ export const authClient = createAuthClient({
       cancelOnTapOutside: false,  // Don't dismiss on outside click
     }),
     organizationClient(),  // Organization management
-    stripeClient(),        // Subscription management
+    // stripeClient(),     // TODO: Enable when implementing monetization
   ],
 });
 

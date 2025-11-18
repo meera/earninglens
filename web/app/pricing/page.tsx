@@ -1,64 +1,59 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
-import { Logo } from '@/components/Logo';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Pricing - Markey HawkEye',
-  description: 'Simple, transparent pricing for earnings call video access. Start free, upgrade anytime.',
+export const metadata = {
+  title: 'Pricing | MarketHawk',
+  description: 'Simple, transparent pricing for earnings call insights',
 };
 
-const plans = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    description: 'Explore earnings calls',
-    features: [
-      'Browse all 7,372 companies',
-      'Access company pages',
-      'View company information',
-      'Community support',
-    ],
-    cta: 'Current Plan',
-    href: '/auth/signin',
-    highlighted: false,
-    disabled: true,
-  },
-  {
-    name: 'Standard',
-    price: '$39',
-    period: 'per month',
-    description: 'Unlimited access to earnings calls',
-    features: [
-      'Unlimited full earnings call audio',
-      'AI-generated insights & analysis',
-      'Complete transcripts',
-      'Priority support',
-      'Cancel anytime',
-    ],
-    cta: 'Subscribe Now',
-    href: '/api/billing/checkout?plan=standard',
-    highlighted: true,
-    disabled: false,
-  },
-];
-
-export default async function PricingPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+export default function PricingPage() {
+  const plans = [
+    {
+      name: 'Free',
+      price: '$0',
+      period: 'forever',
+      description: 'Explore earnings calls',
+      features: [
+        'Browse all 7,372 companies',
+        'View company information',
+        'Access public earnings calls',
+        'Community support',
+      ],
+      cta: 'Get Started',
+      href: '/auth/signin',
+      highlighted: false,
+    },
+    {
+      name: 'Standard',
+      price: '$39',
+      period: 'per month',
+      description: 'Unlimited access to earnings calls',
+      features: [
+        'Everything in Free',
+        'Unlimited full earnings call audio/video',
+        'AI-generated insights & analysis',
+        'Complete transcripts with search',
+        'Sentiment analysis',
+        'Key highlights & metrics',
+        'Priority support',
+        'Cancel anytime',
+      ],
+      cta: 'Subscribe Now',
+      // TODO: Replace with proper checkout flow once Stripe integration is complete
+      href: 'https://buy.stripe.com/9B65kCbaj0vc0CJbUu6AM00',
+      highlighted: true,
+      external: true,
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background-elevated to-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border backdrop-blur-sm bg-background/80 sticky top-0 z-50">
+      <header className="border-b border-border bg-background-elevated">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <Logo />
-
+            <Link href="/" className="text-xl font-bold text-primary">
+              MarketHawk
+            </Link>
             <nav className="flex items-center space-x-6">
               <Link href="/" className="text-text-tertiary hover:text-primary transition-colors text-sm">
                 Companies
@@ -66,159 +61,118 @@ export default async function PricingPage() {
               <Link href="/pricing" className="text-primary font-medium transition-colors text-sm">
                 Pricing
               </Link>
-              {session ? (
-                <Link
-                  href="/billing"
-                  className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-semibold transition-all text-sm"
-                >
-                  Dashboard
-                </Link>
-              ) : (
-                <Link
-                  href="/api/auth/google-one-tap"
-                  className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-semibold transition-all text-sm"
-                >
-                  Sign In
-                </Link>
-              )}
             </nav>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {/* Page Title */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        {/* Hero */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-text-primary mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
             Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-text-secondary max-w-2xl mx-auto">
-            Start free, upgrade when you need more. No hidden fees, cancel anytime.
+            Start free, upgrade when you're ready. No hidden fees.
           </p>
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`rounded-2xl p-8 ${
+              className={`relative rounded-2xl border-2 p-8 ${
                 plan.highlighted
-                  ? 'bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary shadow-xl shadow-primary/20'
-                  : 'bg-background-muted/40 border border-border'
-              } relative`}
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border bg-background-elevated'
+              }`}
             >
               {plan.highlighted && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-primary text-white px-4 py-1 rounded-full text-sm font-semibold">
-                    Recommended
-                  </span>
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-sm font-medium rounded-full">
+                  Most Popular
                 </div>
               )}
 
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-text-primary mb-2">{plan.name}</h3>
-                <p className="text-text-tertiary text-sm">{plan.description}</p>
-              </div>
-
-              <div className="mb-6">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-bold text-text-primary">{plan.price}</span>
-                  <span className="text-text-tertiary">{plan.period}</span>
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-text-primary mb-2">
+                  {plan.name}
+                </h3>
+                <div className="mb-2">
+                  <span className="text-5xl font-bold text-text-primary">
+                    {plan.price}
+                  </span>
+                  <span className="text-text-secondary ml-2">
+                    {plan.period}
+                  </span>
                 </div>
+                <p className="text-text-secondary">{plan.description}</p>
               </div>
 
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3">
+              <ul className="space-y-4 mb-8">
+                {plan.features.map((feature, index) => (
+                  <li key={index} className="flex items-start">
                     <svg
-                      className="w-5 h-5 text-primary flex-shrink-0 mt-0.5"
+                      className="h-6 w-6 text-primary flex-shrink-0"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
-                    <span className="text-text-secondary text-sm">{feature}</span>
+                    <span className="ml-3 text-text-secondary">{feature}</span>
                   </li>
                 ))}
               </ul>
 
               <Link
                 href={plan.href}
-                className={`block text-center px-6 py-3 rounded-lg font-semibold transition-all ${
-                  plan.disabled
-                    ? 'bg-background-elevated border border-border text-text-tertiary cursor-not-allowed'
-                    : plan.highlighted
-                    ? 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20'
-                    : 'bg-background-elevated hover:bg-background-muted border border-border text-primary'
+                target={plan.external ? '_blank' : undefined}
+                rel={plan.external ? 'noopener noreferrer' : undefined}
+                className={`block w-full py-3 px-6 rounded-lg text-center font-medium transition-colors ${
+                  plan.highlighted
+                    ? 'bg-primary text-white hover:bg-primary-hover'
+                    : 'bg-background-muted text-text-primary hover:bg-border'
                 }`}
               >
                 {plan.cta}
               </Link>
+
+              {plan.external && (
+                <p className="text-xs text-text-tertiary text-center mt-4">
+                  You'll be redirected to Stripe to complete payment
+                </p>
+              )}
             </div>
           ))}
         </div>
 
-        {/* FAQ Section */}
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-text-primary mb-8 text-center">
-            Frequently Asked Questions
-          </h2>
+        {/* FAQ or Additional Info */}
+        <div className="mt-16 text-center">
+          <p className="text-text-secondary">
+            Questions? Email us at{' '}
+            <a
+              href="mailto:support@markethawkeye.com"
+              className="text-primary hover:underline"
+            >
+              support@markethawkeye.com
+            </a>
+          </p>
+        </div>
 
-          <div className="space-y-6">
-            <div className="bg-background-muted/40 border border-border rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Can I cancel anytime?
-              </h3>
-              <p className="text-text-secondary">
-                Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your billing period.
-              </p>
-            </div>
-
-            <div className="bg-background-muted/40 border border-border rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                What payment methods do you accept?
-              </h3>
-              <p className="text-text-secondary">
-                We accept all major credit cards (Visa, Mastercard, American Express) through Stripe.
-              </p>
-            </div>
-
-            <div className="bg-background-muted/40 border border-border rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Is there a free trial?
-              </h3>
-              <p className="text-text-secondary">
-                No free trial currently, but you can explore all company pages and browse earnings calls for free before subscribing.
-              </p>
-            </div>
-          </div>
+        {/* TODO Note */}
+        <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg max-w-2xl mx-auto">
+          <p className="text-sm text-yellow-800">
+            <strong>TODO:</strong> Implement proper Stripe integration with Better Auth plugin
+            and bookkeeping for subscription management. Current flow uses direct Stripe payment link.
+          </p>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="border-t border-border mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="flex items-center space-x-3">
-              <Logo size="small" />
-              <span className="text-text-tertiary text-sm">
-                © 2024 Markey HawkEye. Transform earnings calls into visual insights.
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-6 text-sm">
-              <Link href="mailto:thehawkeyemarket@gmail.com" className="text-text-tertiary hover:text-accent transition-colors">
-                Contact
-              </Link>
-              <Link href="/about" className="text-text-tertiary hover:text-accent transition-colors">
-                About
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
