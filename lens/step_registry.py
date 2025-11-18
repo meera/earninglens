@@ -111,6 +111,11 @@ try:
 except ImportError:
     detect_trim_point = None
 
+try:
+    from steps.match_company import match_company
+except ImportError:
+    match_company = None
+
 
 # Step Handler Registry
 # Maps handler names (from workflow YAML) to Python functions
@@ -148,6 +153,9 @@ STEP_HANDLERS: Dict[str, Callable] = {
     'validate_earnings_call': validate_earnings_call,
     'fuzzy_match_company': fuzzy_match_company,
     'extract_audio_ffmpeg': extract_audio_ffmpeg,
+
+    # Company matching
+    'match_company': match_company,
 
     # Utility steps
     'detect_trim_point': detect_trim_point,
