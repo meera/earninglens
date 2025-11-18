@@ -860,3 +860,5 @@ chmod 755 /var/markethawk/jobs/{JOB_ID}/renders
 - never output the source of earning calls media. Never expoise internal pipeline/job ids on external UI.
 - for production database use postgresql://neondb_owner:npg_e1uBMOdh5QUy@ep-twilight-leaf-a4dgbd70.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 - To run with  production database use following command  'npx dotenv -e .env.production -- npm run dev'
+- no need to include "source .venv/bin/activate" while outputting commands to execute.
+- never hardcode  database urls in code
