@@ -30,7 +30,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Form Panel */}
-        <div className="w-full md:w-1/2 lg:w-5/12 flex flex-col p-4 pt-8 bg-gradient-to-br from-blue-50 to-teal-50">
+        <div className="w-full md:w-1/2 lg:w-5/12 flex flex-col p-4 pt-8 bg-background-elevated">
           <div className="w-full max-w-md mx-auto">
             {children}
           </div>

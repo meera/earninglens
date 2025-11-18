@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
 
+// Stripe initialization will fail at build time if not configured
+// This is intentional - Stripe is required for this application
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-10-29.clover',
 });

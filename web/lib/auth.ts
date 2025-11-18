@@ -9,8 +9,12 @@ import { eq } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { sendEmail } from './email';
 
-// Initialize Stripe client
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Initialize Stripe client - required for production
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY is required. Please set it in your environment variables.');
+}
+
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-10-29.clover',
 });
 

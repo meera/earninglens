@@ -4,7 +4,7 @@ import { TrendingUp, Users, BarChart3, Zap, Check } from 'lucide-react';
 
 export function AuthMarketingPanel() {
   return (
-    <div className="hidden md:flex flex-col justify-center bg-white w-full h-full p-4 lg:p-6 rounded-lg">
+    <div className="hidden md:flex flex-col justify-center bg-background-elevated w-full h-full p-4 lg:p-6 rounded-lg border border-border">
       <div className="max-w-lg space-y-6">
         {/* Header */}
         <div>

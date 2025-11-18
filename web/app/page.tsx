@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { Logo } from '@/components/Logo';
+import { UserProfileMenu } from '@/components/UserProfileMenu';
 import { getCompanies, getSectors, getTopCompaniesByMarketCap } from '@/lib/db/companies';
 
 export const metadata = {
@@ -101,6 +102,7 @@ export default async function HomePage({
               <Link href="/about" className="text-text-tertiary hover:text-primary transition-colors text-sm">
                 About
               </Link>
+              <UserProfileMenu />
             </nav>
           </div>
         </div>

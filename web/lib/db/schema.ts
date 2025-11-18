@@ -335,14 +335,36 @@ export const newsletterSubscribers = markethawkSchema.table(
     symbol: varchar('symbol', { length: 10 }).notNull(),
     quarter: varchar('quarter', { length: 10 }).notNull(),
     year: integer('year').notNull(),
-    mediaUrl: varchar('media_url', { length: 512 }),  // renamed from audioUrl
+    mediaUrl: varchar('media_url', { length: 512 }),
     youtubeId: varchar('youtube_id', { length: 50 }),
     metadata: jsonb('metadata').$type<Record<string, any>>().default({}),
-    artifacts: jsonb('artifacts').$type<Record<string, any>>(),  // NEW
-    isLatest: boolean('is_latest').default(true),  // NEW
+    transcripts: jsonb('transcripts').$type<Record<string, any>>(),  // Transcript data (word-level, paragraphs, speakers)
+    insights: jsonb('insights').$type<Record<string, any>>(),  // AI-generated insights (financial metrics, highlights, sentiment)
+    isLatest: boolean('is_latest').default(true),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   });
+
+// Earnings Call Views - Track user access to earnings calls (for daily limits)
+// TODO: Uncomment when implementing monetization strategy
+// export const earningsCallViews = markethawkSchema.table(
+//   'earnings_call_views',
+//   {
+//     id: varchar('id', { length: 255 }).primaryKey().$defaultFn(() => `ecv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`),
+//     userId: varchar('user_id', { length: 255 }).notNull(), // Better Auth user.id
+//     earningsCallId: varchar('earnings_call_id', { length: 255 })
+//       .references(() => earningsCalls.id, { onDelete: 'cascade' })
+//       .notNull(),
+//     viewedAt: timestamp('viewed_at').defaultNow().notNull(),
+//     completed: boolean('completed').default(false), // Did they watch to the end?
+//     metadata: jsonb('metadata').$type<Record<string, any>>().default({}), // Optional: duration watched, device, etc.
+//   },
+//   (table) => ({
+//     userIdIdx: index('idx_earnings_call_views_user_id').on(table.userId),
+//     earningsCallIdIdx: index('idx_earnings_call_views_earnings_call_id').on(table.earningsCallId),
+//     viewedAtIdx: index('idx_earnings_call_views_viewed_at').on(table.viewedAt),
+//   })
+// );
 
 // ============================================
 // RELATIONS

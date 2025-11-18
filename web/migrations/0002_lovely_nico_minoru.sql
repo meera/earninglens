@@ -1,0 +1,1 @@
+DROP TABLE "markethawkeye"."earnings_call_views" CASCADE;

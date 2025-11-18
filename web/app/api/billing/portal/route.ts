@@ -5,6 +5,8 @@ import Stripe from 'stripe';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 
+// Stripe initialization will fail at build time if not configured
+// This is intentional - Stripe is required for this application
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-10-29.clover',
 });

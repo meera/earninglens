@@ -14,7 +14,7 @@
  * - invitation (from invitation plugin)
  */
 
-import { varchar, timestamp, boolean, text, jsonb, pgSchema } from 'drizzle-orm/pg-core';
+import { varchar, timestamp, boolean, text, jsonb, pgSchema, integer, date } from 'drizzle-orm/pg-core';
 
 // Use the markethawkeye schema (same as other MarketHawk tables)
 const markethawkSchema = pgSchema('markethawkeye');
@@ -25,6 +25,18 @@ export const user = markethawkSchema.table('user', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   emailVerified: boolean('emailVerified').notNull().default(false),
   image: varchar('image', { length: 512 }),
+
+  // Subscription & Usage Tracking
+  subscriptionTier: varchar('subscriptionTier', { length: 50 }).default('free'),  // 'free' or 'premium'
+  stripeCustomerId: varchar('stripeCustomerId', { length: 255 }),
+  stripeSubscriptionId: varchar('stripeSubscriptionId', { length: 255 }),
+  subscriptionStatus: varchar('subscriptionStatus', { length: 50 }),  // 'active', 'canceled', 'past_due'
+  subscriptionEndsAt: timestamp('subscriptionEndsAt'),
+
+  // Daily View Tracking
+  dailyViewCount: integer('dailyViewCount').default(0),
+  lastViewDate: date('lastViewDate'),  // Track which day the count is for
+
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 });
