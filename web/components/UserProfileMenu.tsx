@@ -33,8 +33,9 @@ export function UserProfileMenu() {
     );
   }
 
-  const user = session.user;
+  const user = session.user as typeof session.user & { subscriptionTier?: string };
   const displayName = user.name || user.email.split('@')[0];
+  const subscriptionTier = user.subscriptionTier || 'free';
 
   return (
     <DropdownMenu
@@ -51,14 +52,14 @@ export function UserProfileMenu() {
       <div className="px-4 py-3 border-b border-border">
         <p className="text-sm font-medium text-text-primary">{displayName}</p>
         <p className="text-xs text-text-tertiary truncate">{user.email}</p>
-        {user.subscriptionTier === 'free' && (
+        {subscriptionTier === 'free' && (
           <div className="mt-2">
             <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-background-muted text-text-tertiary">
               Free Plan
             </span>
           </div>
         )}
-        {user.subscriptionTier !== 'free' && (
+        {subscriptionTier !== 'free' && (
           <div className="mt-2">
             <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-primary/10 text-primary">
               ✓ Subscribed
@@ -67,7 +68,7 @@ export function UserProfileMenu() {
         )}
       </div>
 
-      {user.subscriptionTier === 'free' && (
+      {subscriptionTier === 'free' && (
         <>
           <DropdownMenuItem onClick={() => router.push('/pricing')} className="text-primary font-medium">
             ⚡ Subscribe ($39/mo)
