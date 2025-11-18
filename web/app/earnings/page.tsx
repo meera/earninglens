@@ -37,14 +37,15 @@ export default async function EarningsCallsPage() {
           {calls.map((call) => {
             const metadata = call.metadata || {};
             const insights = call.insights || {};
-            const companyName = insights.company_name || metadata.company_name || 'Unknown Company';
+            const companyName = call.companyName || insights.company_name || metadata.company_name || 'Unknown Company';
             const processedAt = metadata.processed_at
               ? new Date(metadata.processed_at).toLocaleDateString()
               : 'Unknown date';
 
-            // Generate SEO-friendly URL: /earnings/plby/q3-2025
+            // Generate SEO-friendly URL: /earnings/playboy/q3-2025
             const quarterSlug = call.quarter.toLowerCase();
-            const earningsUrl = `/earnings/${call.symbol.toLowerCase()}/${quarterSlug}-${call.year}`;
+            const slug = call.companySlug || call.symbol.toLowerCase(); // Fallback to symbol if no company slug
+            const earningsUrl = `/earnings/${slug}/${quarterSlug}-${call.year}`;
 
             return (
               <Link

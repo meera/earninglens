@@ -32,12 +32,10 @@ export default async function EarningsCallPage({
     notFound();
   }
 
-  // For MVP, use symbol instead of company slug
-  // TODO: Add company slug lookup once companies table is integrated
-  const symbol = company.toUpperCase();
   const { quarter, year } = parsed;
 
-  const result = await getEarningsCallBySlug(symbol, quarter, year);
+  // Use company slug for lookup (e.g., "playboy")
+  const result = await getEarningsCallBySlug(company, quarter, year);
 
   if (!result.success || !result.data) {
     notFound();
@@ -81,7 +79,7 @@ export default async function EarningsCallPage({
     }
   }
 
-  const companyName = insights.company_name || metadata.company_name || 'Unknown Company';
+  const companyName = call.companyName || insights.company_name || metadata.company_name || 'Unknown Company';
   const processedAt = metadata.processed_at
     ? new Date(metadata.processed_at).toLocaleDateString('en-US', {
         year: 'numeric',
