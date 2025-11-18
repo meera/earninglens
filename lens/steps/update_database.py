@@ -105,7 +105,8 @@ WHERE symbol = '{ticker}'
   AND year = {year};
 """
 
-    # Then insert new record
+    # Build SQL with proper JSON escaping
+    # Use dollar-quoted strings for JSON to avoid escaping issues
     insert_sql = f"""
 INSERT INTO markethawkeye.earnings_calls (
     id, cik_str, symbol, quarter, year,
@@ -120,10 +121,10 @@ INSERT INTO markethawkeye.earnings_calls (
     {year},
     '{media_url}',
     true,
-    '{json.dumps(metadata)}'::jsonb,
-    '{json.dumps(artifacts)}'::jsonb,
-    '{json.dumps(insights)}'::jsonb,
-    '{json.dumps(transcripts)}'::jsonb,
+    $metadata${json.dumps(metadata)}$metadata$::jsonb,
+    $artifacts${json.dumps(artifacts)}$artifacts$::jsonb,
+    $insights${json.dumps(insights)}$insights$::jsonb,
+    $transcripts${json.dumps(transcripts)}$transcripts$::jsonb,
     NOW(),
     NOW()
 )
