@@ -46,6 +46,96 @@ class Chapter(BaseModel):
     title: str = Field(description="Chapter title")
 
 
+class CompanyMention(BaseModel):
+    """Company mentioned in the call"""
+    name: str = Field(description="Company name")
+    ticker: Optional[str] = Field(default=None, description="Stock ticker if mentioned")
+    relationship: Literal["competitor", "partner", "customer", "acquisition_target", "subsidiary", "other"] = Field(
+        description="Relationship to the reporting company"
+    )
+    context: str = Field(description="Brief context of mention")
+
+
+class ProductMention(BaseModel):
+    """Product or service mentioned"""
+    name: str = Field(description="Product/service name")
+    category: Literal["existing", "new_launch", "discontinued", "planned"] = Field(
+        description="Product status"
+    )
+    context: str = Field(description="Context of mention")
+
+
+class GeographicRegion(BaseModel):
+    """Geographic region or market discussed"""
+    region: str = Field(description="Region name (e.g., North America, EMEA, China)")
+    metrics: Optional[str] = Field(default=None, description="Any metrics mentioned for this region")
+    context: str = Field(description="Discussion context")
+
+
+class ExecutiveMention(BaseModel):
+    """Executive or key person mentioned"""
+    name: str = Field(description="Person's name")
+    title: Optional[str] = Field(default=None, description="Job title/role")
+    mention_type: Literal["current_executive", "new_hire", "departure", "board_member", "other"] = Field(
+        description="Type of mention"
+    )
+    context: str = Field(description="Context of mention")
+
+
+class StrategicInitiative(BaseModel):
+    """Strategic initiative or announcement"""
+    title: str = Field(description="Initiative name/title")
+    category: Literal["product_launch", "acquisition", "partnership", "restructuring", "investment", "regulatory", "other"] = Field(
+        description="Type of initiative"
+    )
+    description: str = Field(description="Brief description")
+    timestamp: int = Field(description="When mentioned (seconds)")
+
+
+class GuidanceMetric(BaseModel):
+    """Forward guidance metric"""
+    metric: str = Field(description="Metric name (e.g., Revenue, EPS)")
+    period: str = Field(description="Guidance period (e.g., Q4 2025, FY2025)")
+    guidance: str = Field(description="Guidance value or range")
+    change: Optional[Literal["raised", "lowered", "maintained", "new"]] = Field(
+        default=None, description="Change from prior guidance"
+    )
+    context: str = Field(description="Additional context")
+
+
+class RiskFactor(BaseModel):
+    """Risk factor or concern highlighted"""
+    risk: str = Field(description="Risk description")
+    category: Literal["market", "regulatory", "operational", "competitive", "financial", "other"] = Field(
+        description="Risk category"
+    )
+    severity: Literal["low", "medium", "high"] = Field(description="Implied severity")
+    mitigation: Optional[str] = Field(default=None, description="Mitigation strategy if mentioned")
+
+
+class AnalystConcern(BaseModel):
+    """Key analyst question or concern"""
+    topic: str = Field(description="Topic/concern")
+    analyst_firm: Optional[str] = Field(default=None, description="Analyst's firm if mentioned")
+    management_response_summary: str = Field(description="Summary of management's response")
+    timestamp: int = Field(description="When asked (seconds)")
+
+
+class SentimentAnalysis(BaseModel):
+    """Overall sentiment and tone analysis"""
+    management_tone: Literal["very_bullish", "bullish", "neutral", "cautious", "defensive"] = Field(
+        description="Management's overall tone"
+    )
+    confidence_level: Literal["very_high", "high", "moderate", "low"] = Field(
+        description="Management confidence in business outlook"
+    )
+    analyst_sentiment: Literal["positive", "neutral", "skeptical", "negative"] = Field(
+        description="Overall analyst sentiment from Q&A"
+    )
+    key_themes: List[str] = Field(description="3-5 key themes from the call")
+    notable_quotes: List[str] = Field(description="2-3 memorable quotes from executives")
+
+
 class EarningsInsights(BaseModel):
     """Complete earnings call insights"""
     # Company detection and validation
@@ -55,11 +145,24 @@ class EarningsInsights(BaseModel):
     quarter: str = Field(description="Quarter (e.g., Q3, Q4)")
     year: int = Field(description="Year (e.g., 2025)")
 
-    # Content insights
+    # Core content insights
     speakers: List[Speaker] = Field(description="All speakers identified in the call")
     financial_metrics: List[FinancialMetric] = Field(description="Key financial metrics mentioned")
     highlights: List[Highlight] = Field(description="5-10 key highlights from the call")
     chapters: List[Chapter] = Field(description="Video chapter markers for major sections")
+
+    # Enhanced entity extraction
+    companies_mentioned: List[CompanyMention] = Field(default=[], description="Other companies mentioned (competitors, partners, customers)")
+    products_mentioned: List[ProductMention] = Field(default=[], description="Products and services discussed")
+    geographic_regions: List[GeographicRegion] = Field(default=[], description="Geographic markets discussed")
+    executives_mentioned: List[ExecutiveMention] = Field(default=[], description="Executives or key people mentioned beyond speakers")
+    strategic_initiatives: List[StrategicInitiative] = Field(default=[], description="Strategic announcements and initiatives")
+    guidance_metrics: List[GuidanceMetric] = Field(default=[], description="Forward guidance provided")
+    risk_factors: List[RiskFactor] = Field(default=[], description="Risks and concerns highlighted")
+    analyst_concerns: List[AnalystConcern] = Field(default=[], description="Key analyst questions and concerns from Q&A")
+    sentiment: SentimentAnalysis = Field(description="Overall sentiment and tone analysis")
+
+    # Narrative outputs
     summary: str = Field(description="2-3 paragraph narrative summary of the call")
     youtube_title: str = Field(description="Optimized YouTube video title")
     youtube_description: str = Field(description="YouTube description with timestamps")
@@ -146,6 +249,17 @@ CHAPTERS:
   - Guidance / Outlook
   - Q&A Session
 - Use actual timestamps from transcript
+
+ENTITY EXTRACTION (Extract as much structured data as possible):
+- Companies Mentioned: Competitors, partners, customers, acquisition targets with relationship context
+- Products: All products/services discussed (existing, new launches, discontinued, planned)
+- Geographic Regions: Markets discussed with any associated metrics or performance data
+- Executives: Key people mentioned (new hires, departures, board members) beyond call speakers
+- Strategic Initiatives: Major announcements (acquisitions, partnerships, product launches, restructuring, investments)
+- Guidance: All forward-looking metrics with periods and changes from prior guidance
+- Risk Factors: Risks highlighted (market, regulatory, operational, competitive, financial) with severity
+- Analyst Concerns: Key questions from Q&A with topics, firms, and management response summaries
+- Sentiment: Overall tone analysis (management confidence, analyst sentiment, key themes, notable quotes)
 
 SUMMARY:
 - 2-3 paragraph narrative covering:
@@ -275,6 +389,17 @@ CHAPTERS:
   - Guidance / Outlook
   - Q&A Session
 - Use actual timestamps from transcript
+
+ENTITY EXTRACTION (Extract as much structured data as possible):
+- Companies Mentioned: Competitors, partners, customers, acquisition targets with relationship context
+- Products: All products/services discussed (existing, new launches, discontinued, planned)
+- Geographic Regions: Markets discussed with any associated metrics or performance data
+- Executives: Key people mentioned (new hires, departures, board members) beyond call speakers
+- Strategic Initiatives: Major announcements (acquisitions, partnerships, product launches, restructuring, investments)
+- Guidance: All forward-looking metrics with periods and changes from prior guidance
+- Risk Factors: Risks highlighted (market, regulatory, operational, competitive, financial) with severity
+- Analyst Concerns: Key questions from Q&A with topics, firms, and management response summaries
+- Sentiment: Overall tone analysis (management confidence, analyst sentiment, key themes, notable quotes)
 
 SUMMARY:
 - 2-3 paragraph narrative covering:
