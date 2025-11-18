@@ -98,3 +98,4 @@ data/nasdaq_screener*.csv
 *.tsbuildinfo
 Youtube-MarketHawk-OAuth.json
 .env.prod
+.env.production
