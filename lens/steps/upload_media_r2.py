@@ -13,9 +13,6 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from env_loader import get_r2_bucket_name
 
-# Get R2 bucket from environment
-R2_BUCKET = get_r2_bucket_name()
-
 
 def upload_media_r2(job_dir: Path, job_data: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -28,6 +25,9 @@ def upload_media_r2(job_dir: Path, job_data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Result dict with r2:// URL for media file
     """
+    # Get R2 bucket from environment (called at runtime, not import time)
+    R2_BUCKET = get_r2_bucket_name()
+
     # Get job info
     job_id = job_data.get('job_id')
     if not job_id:

@@ -42,8 +42,8 @@ def update_database(job_dir: Path, job_data: Dict[str, Any]) -> Dict[str, Any]:
     cik_str = company_match.get('cik_str', '')
 
     # Get media URL from R2 upload step
-    upload_r2_result = job_data.get('processing', {}).get('upload_r2', {})
-    media_url = upload_r2_result.get('media_url', '')
+    upload_media_r2_result = job_data.get('processing', {}).get('upload_media_r2', {})
+    media_url = upload_media_r2_result.get('media_url', '')
 
     # Get artifacts from upload_artifacts step
     upload_artifacts_result = job_data.get('processing', {}).get('upload_artifacts', {})

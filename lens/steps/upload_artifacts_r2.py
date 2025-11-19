@@ -14,9 +14,6 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from env_loader import get_r2_bucket_name
 
-# Get R2 bucket from environment
-R2_BUCKET = get_r2_bucket_name()
-
 
 def upload_artifacts_r2(job_dir: Path, job_data: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -29,6 +26,10 @@ def upload_artifacts_r2(job_dir: Path, job_data: Dict[str, Any]) -> Dict[str, An
     Returns:
         Result dict with r2:// URLs for artifacts
     """
+    # Get R2 bucket from environment (called at runtime, not import time)
+    R2_BUCKET = get_r2_bucket_name()
+    print(f"Using R2 bucket: {R2_BUCKET}")
+
     # Get company info for R2 path
     company = job_data.get('company', {})
     confirmed_meta = job_data.get('processing', {}).get('confirm_metadata', {}).get('confirmed', {})

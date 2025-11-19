@@ -79,6 +79,14 @@ def get_r2_bucket_name() -> str:
     return bucket
 
 
+def get_r2_rclone_remote() -> str:
+    """Get R2_RCLONE_REMOTE from environment (e.g., 'r2-prod', 'r2-local')"""
+    remote = os.getenv('R2_RCLONE_REMOTE')
+    if not remote:
+        raise ValueError("R2_RCLONE_REMOTE not set in environment")
+    return remote
+
+
 # Auto-load on import (unless explicitly disabled)
 if os.getenv('SKIP_ENV_LOAD') != 'true':
     load_environment()

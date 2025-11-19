@@ -1,0 +1,83 @@
+# Manual Audio Workflow with Pre-existing Banner
+# For processing manually downloaded MP3/audio files with banner.jpg in input directory
+
+name: manual-audio-with-banner
+description: Process manually downloaded earnings call audio with combined metadata+insights extraction and pre-existing banner image
+
+steps:
+  # Step 1: Copy provided audio file to job directory
+  - name: copy_audio
+    handler: copy_audio_to_job
+    required: true
+    description: Copy audio file to job input directory
+
+  # Step 2: Transcribe full audio with WhisperX
+  - name: transcribe
+    handler: transcribe_whisperx
+    required: true
+    description: Transcribe audio with speaker diarization and word-level timestamps
+    skip_if: "processing.copy_audio.status != 'completed'"
+
+  # Step 3: Extract metadata AND insights in single LLM call
+  # Note: extract_insights_step auto-detects company/ticker/quarter if not confirmed
+  - name: extract_insights
+    handler: extract_insights_structured
+    required: true
+    description: Extract company, ticker, quarter, year AND financial insights in single LLM call
+    skip_if: "processing.transcribe.status != 'completed'"
+
+  # Step 4: Interactive confirmation - user confirms company, quarter, year
+  - name: confirm_metadata
+    handler: interactive_confirm_metadata
+    required: true
+    description: Confirm company, quarter, and year (extracted from insights)
+    skip_if: "processing.extract_insights.status != 'completed'"
+
+  # Step 5: Match company to get CIK from database
+  - name: match_company
+    handler: match_company
+    required: false
+    description: Fuzzy match company name/ticker to get CIK from database
+    skip_if: "processing.confirm_metadata.status != 'completed'"
+
+  # Step 6: Refine timestamps to word-level precision
+  - name: refine_timestamps
+    handler: refine_timestamps
+    required: true
+    description: Refine metric/highlight timestamps to word-level precision
+    skip_if: "processing.extract_insights.status != 'completed'"
+
+  # Step 7: Use existing banner.jpg from input directory
+  - name: use_input_banner
+    handler: use_input_banner
+    required: true
+    description: Copy banner.jpg from input directory to renders directory
+    skip_if: "processing.refine_timestamps.status != 'completed'"
+
+  # Step 8: Render video with FFmpeg (audio + banner)
+  - name: render
+    handler: ffmpeg_audio_with_banner
+    required: true
+    description: Render video using FFmpeg (audio file + banner overlay)
+    skip_if: "processing.use_input_banner.status != 'completed'"
+
+  # Step 9: Upload artifacts to R2 (transcript.json, insights.json)
+  - name: upload_artifacts
+    handler: upload_artifacts_r2
+    required: false
+    description: Upload transcript and insights JSON files to R2
+    skip_if: "processing.render.status != 'completed'"
+
+  # Step 10: Upload rendered video to R2
+  - name: upload_media_r2
+    handler: upload_media_r2
+    required: true
+    description: Upload rendered video to R2 storage
+    skip_if: "processing.render.status != 'completed'"
+
+  # Step 11: Update database with earnings call record
+  - name: update_database
+    handler: update_database
+    required: false
+    description: Insert/update earnings_calls table with metadata and artifacts
+    skip_if: "processing.upload_media_r2.status != 'completed'"

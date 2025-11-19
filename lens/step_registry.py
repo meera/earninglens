@@ -116,6 +116,16 @@ try:
 except ImportError:
     match_company = None
 
+try:
+    from steps.use_input_banner import use_input_banner
+except ImportError:
+    use_input_banner = None
+
+try:
+    from steps.ffmpeg_audio_with_banner import ffmpeg_audio_with_banner
+except ImportError:
+    ffmpeg_audio_with_banner = None
+
 
 # Step Handler Registry
 # Maps handler names (from workflow YAML) to Python functions
@@ -142,7 +152,9 @@ STEP_HANDLERS: Dict[str, Callable] = {
 
     # Rendering and thumbnails
     'create_banner': create_banner,
+    'use_input_banner': use_input_banner,
     'ffmpeg_audio_intact_with_banner': ffmpeg_audio_intact_with_banner,
+    'ffmpeg_audio_with_banner': ffmpeg_audio_with_banner,
     'remotion_render': remotion_render,
     'generate_thumbnails': generate_thumbnails_step,
 

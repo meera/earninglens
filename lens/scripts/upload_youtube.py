@@ -92,14 +92,20 @@ def build_description(job_data: Dict) -> str:
     # Prefer confirmed metadata (from manual-audio workflow) over top-level company
     confirmed = job_data.get('processing', {}).get('confirm_metadata', {}).get('confirmed', {})
 
-    # Extract company info (confirmed metadata takes priority)
-    name = confirmed.get('company') or company.get('name', 'Company')
-    ticker = confirmed.get('ticker') or company.get('ticker', 'N/A')
-    slug = company.get('slug', ticker.lower())
+    # Get company metadata from match_company step (has slug, exchange, sector, etc.)
+    match_result = job_data.get('processing', {}).get('match_company', {})
+    company_match = match_result.get('company_match', {})
+    company_metadata = company_match.get('metadata', {})
+
+    # Extract company info (confirmed metadata takes priority, then company_match, then company)
+    name = confirmed.get('company') or company_match.get('name') or company.get('name', 'Company')
+    ticker = confirmed.get('ticker') or company_match.get('symbol') or company.get('ticker', 'N/A')
+    slug = company_match.get('slug') or company.get('slug', ticker.lower())
     quarter = confirmed.get('quarter') or company.get('quarter', 'Q3-2025')
     year = confirmed.get('year') or company.get('year', 2025)
-    exchange = company.get('exchange', 'N/A')
-    sector = company.get('sector', 'N/A')
+
+    exchange = company_metadata.get('exchange') or company.get('exchange')
+    sector = company_metadata.get('sector') or company.get('sector')
 
     # Combine quarter and year if separate
     if isinstance(quarter, str) and '-' not in quarter and year:
@@ -122,15 +128,24 @@ def build_description(job_data: Dict) -> str:
         lines.append(summary)
         lines.append("")
 
-    # Company info section
-    lines.append("Company Info:")
-    lines.append(f"• Exchange: {exchange}")
-    lines.append(f"• Sector: {sector}")
-    lines.append(f"• Ticker: {ticker}")
-    lines.append("")
+    # Company info section (only include if we have any enriched data)
+    company_info_items = []
+    if exchange:
+        company_info_items.append(f"• Exchange: {exchange}")
+    if sector:
+        company_info_items.append(f"• Sector: {sector}")
+    if ticker and ticker != 'N/A':
+        company_info_items.append(f"• Ticker: {ticker}")
 
-    # Link to full analysis (using slug-based URL)
-    lines.append(f"📊 Full interactive analysis: https://markethawkeye.com/companies/{slug}")
+    if company_info_items:
+        lines.append("Company Info:")
+        lines.extend(company_info_items)
+        lines.append("")
+
+    # Link to full analysis (using earnings-based URL format)
+    # Format: /earnings/{company-slug}/{quarter-year} (e.g., /earnings/home-depot/q3-2025)
+    quarter_slug = quarter.lower() if quarter else 'q3-2025'
+    lines.append(f"📊 Full interactive analysis: https://markethawkeye.com/earnings/{slug}/{quarter_slug}")
     lines.append("")
 
     # Chapters
