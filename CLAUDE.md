@@ -46,7 +46,7 @@ Markey HawkEye transforms earnings call audio into visually-enhanced YouTube vid
 
 **R2 Bucket Strategy:**
 - Dev environment (`DEV_MODE=true`): Upload to `dev-markethawkeye`, store URLs as `r2://dev-markethawkeye/...`
-- Prod environment (`DEV_MODE=false`): Upload to `markeyhawkeye`, store URLs as `r2://markeyhawkeye/...`
+- Prod environment (`DEV_MODE=false`): Upload to `markethawkeye`, store URLs as `r2://markethawkeye/...`
 - URLs must be honest (match actual file location, never lie about bucket)
 - Migration: Copy files to prod bucket + update database with `DEV_MODE=false`
 
@@ -742,6 +742,69 @@ MEDIA_SERVER_URL="http://192.168.1.101:8080"
 const mediaServerUrl = process.env.MEDIA_SERVER_URL || 'http://192.168.1.101:8080';
 const videoPath = `${mediaServerUrl}/jobs/{JOB_ID}/input/source.mp4`;
 ```
+
+---
+
+## R2 Storage & Rclone Configuration
+
+### Rclone Remotes
+MarketHawk uses dedicated rclone remotes (separate from VideotoBe project):
+
+- **Development:** `r2-markethawkeye-dev:dev-markethawkeye/`
+- **Production:** `r2-markethawk-prod:markethawkeye/`
+
+**IMPORTANT:** Do NOT use `r2-dev` or `r2-prod` - those are for VideotoBe project.
+
+### Environment Detection
+Environment is controlled by `DEV_MODE` variable:
+- `DEV_MODE=true` (default) → Development bucket (`dev-markethawkeye`)
+- `DEV_MODE=false` → Production bucket (`markethawkeye`)
+
+### Rclone Commands
+
+**Development Operations:**
+```bash
+# List all files in dev
+rclone ls r2-markethawkeye-dev:dev-markethawkeye/
+
+# Upload to dev
+rclone copy video.mp4 r2-markethawkeye-dev:dev-markethawkeye/company/2025/Q3/
+
+# Check size
+rclone size r2-markethawkeye-dev:dev-markethawkeye/
+```
+
+**Production Operations:**
+```bash
+# List all files in prod
+rclone ls r2-markethawk-prod:markethawkeye/
+
+# Upload to prod
+rclone copy video.mp4 r2-markethawk-prod:markethawkeye/company/2025/Q3/
+
+# Sync from dev to prod (be careful!)
+rclone sync r2-markethawkeye-dev:dev-markethawkeye/ r2-markethawk-prod:markethawkeye/ --dry-run
+```
+
+### Python Pipeline Usage
+
+```python
+# Automatically detects environment from DEV_MODE
+import os
+
+# Development (default)
+os.environ.get('DEV_MODE', 'true')  # → uses r2-markethawkeye-dev
+
+# Production
+os.environ['DEV_MODE'] = 'false'  # → uses r2-markethawk-prod
+```
+
+### Database URL Format
+Store full R2 URLs in database including bucket name:
+- Development: `r2://dev-markethawkeye/path/to/file.mp4`
+- Production: `r2://markethawkeye/path/to/file.mp4`
+
+This ensures URLs are honest about actual file location.
 
 ---
 

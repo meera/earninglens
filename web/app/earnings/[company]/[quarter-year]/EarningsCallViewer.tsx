@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useMediaPlayer } from './MediaPlayerContext';
 
 interface Paragraph {
   speaker: string;
@@ -30,6 +31,14 @@ export function EarningsCallViewer({
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { registerPlayer } = useMediaPlayer();
+
+  // Register the media player with context
+  useEffect(() => {
+    if (videoRef.current) {
+      registerPlayer(videoRef.current);
+    }
+  }, [mediaUrl, registerPlayer]);
 
   // Create speaker name mapping
   const speakerMap = speakers.reduce((acc, speaker) => {
